@@ -1,0 +1,15 @@
+{
+    "manifest_version": 2,
+    "name": "Input Focus Popup",
+    "version": "1.0",
+    "description": "Shows a popup when a user focuses on a text input box.",
+    "permissions": ["activeTab"],
+    "content_scripts": [
+      {
+        "matches": ["http://*/*", "https://*/*"],
+        "js": ["contentScript.bundle.js"],
+        "css": ["popup.css"]
+      }
+    ]
+  }
+  
