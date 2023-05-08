@@ -1,0 +1,119 @@
+.popup-content {
+  border: 1px solid black;
+  background-color: white;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.popup-gpt-result {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  background-color: white;
+  border: none;
+  color: black;
+  max-width: 500px;
+}
+
+.popup-close-button {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #666;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.popup-close-button:hover {
+  color: #333;
+}
+
+.popup-wrapper {
+  min-width: 300px;
+}
+
+.popup-input {
+  background-color: white;
+  border: none;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  max-width: 300px;
+}
+
+input:focus,
+input.form-control:focus {
+  outline: none !important;
+  outline-width: 0 !important;
+  box-shadow: none;
+  -moz-box-shadow: none;
+  -webkit-box-shadow: none;
+}
+
+.popup-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.popup-input {
+  resize: none;
+  min-height: 30px;
+  max-height: 100px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+.popup-gpt-result {
+  resize: none;
+  min-height: 100px;
+  max-height: 1000px;
+  overflow-y: auto;
+}
+
+.popup-input-wrapper {
+  background-color: white;
+}
+
+.half-scroll {
+  overflow-y: scroll;
+  height: 10em; /* set the height of the textarea */
+}
+
+.half-scroll::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 5px;
+}
+
+.half-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.half-scroll::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+.half-scroll:focus {
+  /* set the scroll position to show the half part of the remaining text when the textarea is focused */
+  scroll-behavior: smooth;
+  scroll-margin-block: 50%; /* set the margin block to 50% to show the half part of the remaining text */
+}
+
+.textarea-container {
+  position: relative;
+}
+
+.gradient-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background-image: linear-gradient(to top, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%); /* Replace the rgba(255, 255, 255, *) values with the background color of your text area */
+  pointer-events: none; /* Make the gradient unclickable */
+}
