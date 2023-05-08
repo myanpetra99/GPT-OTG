@@ -1,3 +1,4 @@
+//ofc fetch the GPT Response!
 async function fetchFreeGPTResponse(prompt, onChunkReceived) {
   const url = "https://free.churchless.tech/v1/chat/completions";
   const headers = {
@@ -67,7 +68,7 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     onChunkReceived("Sorry, something went wrong");
   }
 }
-
+// create the popup
 function createPopup() {
   const popup = document.createElement("div");
   popup.id = "input-focus-popup";
