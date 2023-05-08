@@ -134,24 +134,40 @@ function createPopup() {
       event.preventDefault();
       gptResult.value = "";
       const userInput = input.value.trim();
+      const backupInput = input.value;
       input.value = "waiting response from AI...";
+      input.disabled = true;
       if (userInput.length > 0) {
         // Pass the callback function to fetchFreeGPTResponse
         fetchFreeGPTResponse(userInput, (chunk) => {
           const targetId = popup.getAttribute("data-target-id");
           const targetElement = document.getElementById(targetId);
-
-          if (targetElement) {
-            if (targetElement.tagName === "INPUT" || targetElement.tagName === "TEXTAREA") {
-              targetElement.value += chunk;
-            } else if (targetElement.getAttribute("contenteditable") === "true") {
-              targetElement.innerHTML += chunk;
-            }
+          console.log('Ready to input chunk')
+          if (chunk === "Sorry, something went wrong") {
+            input.value = backupInput;
+            input.disabled = false;
+            gptResult.value += chunk;
+            return;
           }
-          gptResult.value += chunk;
-          const contentWidth = gptResult.scrollWidth;
-          popupWrapper.style.width = `${contentWidth + 20}px`; // Update the width of the popupWrapper
-          input.value = "";
+          if (input.id === 'TYPE'){
+            if (targetElement) {
+              console.log('Elemement found')
+              if ((targetElement.tagName === "INPUT" || targetElement.tagName === "TEXTAREA") && targetElement ) {
+                targetElement.value += chunk;
+              } else if (targetElement.getAttribute("contenteditable") === "true") {
+                targetElement.innerHTML += chunk;
+              }
+            }
+            input.value = "";
+            input.disabled = false;
+          }
+          else if (input.id === 'ASK'){
+            gptResult.value += chunk;
+            const contentWidth = gptResult.scrollWidth;
+            popupWrapper.style.width = `${contentWidth + 20}px`; // Update the width of the popupWrapper
+            input.value = "";
+            input.disabled = false;
+          }
         });
       }
     }
@@ -188,10 +204,22 @@ function isTextInput(element) {
 const popup = createPopup();
 
 document.addEventListener("input", (event) => {
-  if (isTextInput(event.target) && event.target.value.trim().endsWith("/ai")) {
-    event.target.value = event.target.value.trim().slice(0, -3); // Remove "/ai" from the input
+  let mode = null
+  if (isTextInput(event.target) && event.target.tagName !== "DIV" && event.target.value.trim().endsWith("/typeai")){
+    event.target.value = '' // Remove "/ai" from the input
+    mode = 'TYPE'
     showPopup(popup, event.target, event.target); // Pass the focused input element
     const popupInput = popup.querySelector(".popup-input");
+    popupInput.id = mode
+    popupInput.placeholder = "Tell AI to type something!";
+    popupInput.focus();
+  }
+  if (isTextInput(event.target) && event.target.tagName !== "DIV" && event.target.value.trim().endsWith("/ai")){
+    event.target.value = '' // Remove "/ai" from the input
+    mode = 'ASK'
+    showPopup(popup, event.target, event.target); // Pass the focused input element
+    const popupInput = popup.querySelector(".popup-input");
+    popupInput.id = mode
     popupInput.focus();
   }
 });
