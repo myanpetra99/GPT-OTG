@@ -41,6 +41,7 @@
   white-space: pre-wrap;
   overflow-wrap: break-word;
   max-width: 300px;
+  color: black;
 }
 
 input:focus,
@@ -68,12 +69,14 @@ input.form-control:focus {
   max-height: 100px;
   overflow-y: auto;
   margin-bottom: 10px;
+  color: black;
 }
 .popup-gpt-result {
   resize: none;
   min-height: 100px;
   max-height: 1000px;
   overflow-y: auto;
+  color: black;
 }
 
 .popup-input-wrapper {
