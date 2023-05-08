@@ -1,4 +1,6 @@
 # GPT-OTG
+![logo_transparent](https://user-images.githubusercontent.com/57763111/236892374-626e03c5-27eb-4771-afa8-e9daaa6adc83.png)
+
 
 "Understood. How can I assist you today?"
 
@@ -20,8 +22,12 @@ Simply type in the command for the tool you want to use, and the AI will generat
 
 ## Support
 
-If you encounter any issues while using the AI Tools Chrome Extension, please reach out to our support team at myanpetra99@gmail.com / hello.michaelyanpetra@gmail.com. 
+If you encounter any issues while using the extension, please reach out me at myanpetra99@gmail.com / hello.michaelyanpetra@gmail.com. 
 
 ## Conclusion
 
 The AI Tools Chrome Extension is a powerful tool that allows you to access artificial intelligence functionalities quickly and easily. Install the extension, type "/AI" into the input field, and you're ready to go. With its range of features, the AI Tools Chrome Extension is a must-have for anyone looking to leverage the power of artificial intelligence.
+
+
+----------------------------------------------------------------
+**P.S. This markdown was generated using /typeai command**
