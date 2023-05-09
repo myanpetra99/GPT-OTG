@@ -6,6 +6,16 @@
 
 The AI Tools Chrome Extension is a handy tool that allows you to access artificial intelligence functionalities quickly and easily. With this extension, you can run natural language processing (NLP) tasks, perform sentiment analysis, and much more. 
 
+## TODO
+- [x] Create popup
+- [x] Looking for API (Currently using free API from here <a href="https://github.com/editor-syntax/gpt-free">editor-syntax/gpt-free</a> Special thanks to <a href="https://github.com/acheong08">acheong08</a>)
+- [x] Create a basic working prompt
+- [ ] Fix the css
+- [ ] Create landing page website
+- [ ] Make it work for most input/textarea/editable div
+- [ ] a custom API Option
+- [ ] Make it for mobile version?
+
 ## Installation
 
 To use the AI Tools Chrome Extension, follow these steps:
@@ -16,13 +26,14 @@ To use the AI Tools Chrome Extension, follow these steps:
 
 ## Usage
 
-Using the AI Tools Chrome Extension is simple. Just click on the extension icon in your browser's toolbar, and a popup will appear. From there, type "/AI" in the input field to activate the AI tools. 
+Using the this Chrome Extension is simple. Just click on the extension icon in your browser's toolbar, and a popup will appear. From there, type "/AI" in the input field to activate the AI tools. 
 
 Simply type in the command for the tool you want to use, and the AI will generate the results for you. 
 
 ## Support
 
 If you encounter any issues while using the extension, please reach out me at myanpetra99@gmail.com / hello.michaelyanpetra@gmail.com. 
+Open for any PR and please fix my bad code :)
 
 ## Conclusion
 
