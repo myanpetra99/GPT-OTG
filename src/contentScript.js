@@ -68,6 +68,9 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     onChunkReceived("Sorry, something went wrong");
   }
 }
+
+
+
 // create the popup
 function createPopup() {
   const popup = document.createElement("div");
@@ -177,6 +180,7 @@ function createPopup() {
 
 function showPopup(popup, target, inputTarget) {
   const targetRect = target.getBoundingClientRect();
+  popup.style.opacity = 1;
   popup.style.display = "block";
   popup.style.left = `${targetRect.left}px`;
   popup.style.top = `${targetRect.bottom + window.pageYOffset}px`;
@@ -203,31 +207,41 @@ function isTextInput(element) {
 
 const popup = createPopup();
 
-document.addEventListener("input", (event) => {
-  let mode = null
-  if (isTextInput(event.target) && event.target.tagName !== "DIV" && event.target.value.trim().endsWith("/typeai")){
-    event.target.value = '' // Remove "/ai" from the input
-    mode = 'TYPE'
-    showPopup(popup, event.target, event.target); // Pass the focused input element
-    const popupInput = popup.querySelector(".popup-input");
-    popupInput.id = mode
-    popupInput.placeholder = "Tell AI to type something!";
-    popupInput.focus();
-  }
-  if (isTextInput(event.target) && event.target.tagName !== "DIV" && event.target.value.trim().endsWith("/ai")){
-    event.target.value = '' // Remove "/ai" from the input
-    mode = 'ASK'
-    showPopup(popup, event.target, event.target); // Pass the focused input element
-    const popupInput = popup.querySelector(".popup-input");
-    popupInput.id = mode
-    popupInput.focus();
+document.addEventListener("click", (event) => {
+  const popup = document.getElementById("input-focus-popup");
+  const popupWrapper = popup.querySelector(".popup-wrapper");
+  const input = popup.querySelector(".popup-input");
+  const gptResult = popup.querySelector(".popup-gpt-result");
+
+  // Check if the clicked element is outside the popup
+  if (!popupWrapper.contains(event.target)) {
+	popup.style.opacity = 0.3;
+  }else{
+	  popup.style.opacity = 1;
   }
 });
 
-/*
-  document.addEventListener('focusout', (event) => {
-    if (isTextInput(event.target)) {
-      hidePopup(popup);
+ //thanks to @wOxxOm https://stackoverflow.com/questions/51014426/how-can-i-listen-for-keyboard-events-in-gmail 
+window.addEventListener("keypress", captureEvent , true);
+window.addEventListener("keyup", captureEvent, true);
+
+function captureEvent(e) {
+    if (isTextInput(e.target) && e.target.textContent.trim().endsWith("/ai")) {
+        e.target.textContent = '' // Remove "/ai" from the input
+        mode = 'ASK'
+        showPopup(popup, e.target, e.target); // Pass the focused input element
+        const popupInput = popup.querySelector(".popup-input");
+        popupInput.id = mode
+        popupInput.placeholder = "Ask AI anything!";
+        popupInput.focus();
     }
-  });
-  */
+    if (isTextInput(e.target) && e.target.textContent.trim().endsWith("/typeai")) {
+      e.target.textContent = '' // Remove "/ai" from the input
+      mode = 'TYPE'
+      showPopup(popup, e.target, e.target); // Pass the focused input element
+      const popupInput = popup.querySelector(".popup-input");
+      popupInput.id = mode
+      popupInput.placeholder = "Tell AI to type something!";
+      popupInput.focus();
+  }
+  }

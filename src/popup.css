@@ -5,6 +5,14 @@
   color: white;
 }
 
+.popup-content:hover{
+    opacity: 1;
+}
+
+.input-focus-popup:hover{
+  opacity: 1;
+}
+
 .popup-gpt-result {
   white-space: pre-wrap;
   overflow-wrap: break-word;

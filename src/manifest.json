@@ -8,7 +8,9 @@
       {
         "matches": ["http://*/*", "https://*/*"],
         "js": ["contentScript.bundle.js"],
-        "css": ["popup.css"]
+        "css": ["popup.css"],
+        "run_at": "document_end",
+        "all_frames": true
       }
     ]
   }
