@@ -12,9 +12,10 @@ The AI Tools Chrome Extension is a handy tool that allows you to access artifici
 - [x] Create a basic working prompt
 - [x] Make it work for most input/textarea/editable div 
 - [ ] Fix the css
+- [ ] Improve the initial prompt
 - [ ] Create landing page website
 - [ ] a custom API Option
-- [ ] Make it for mobile version?
+- [ ] ..more
 
 ## Installation
 
