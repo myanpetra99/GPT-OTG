@@ -14,7 +14,7 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     {
       role: "system",
       content:
-        "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nRespond using Markdown.",
+        "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by Petra, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or email or letter or etc.. about something, just give the direct answer without any extra sentences like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and don't add anything after the answer, just give straight pure answer about what the user just asked.",
     },
   ];
 
@@ -232,7 +232,7 @@ function captureEvent(e) {
         showPopup(popup, e.target, e.target); // Pass the focused input element
         const popupInput = popup.querySelector(".popup-input");
         popupInput.id = mode
-        popupInput.placeholder = "Ask AI anything!";
+        popupInput.placeholder = "Hello, May i help you?";
         popupInput.focus();
     }
     if (isTextInput(e.target) && e.target.textContent.trim().endsWith("/typeai")) {
@@ -241,7 +241,7 @@ function captureEvent(e) {
       showPopup(popup, e.target, e.target); // Pass the focused input element
       const popupInput = popup.querySelector(".popup-input");
       popupInput.id = mode
-      popupInput.placeholder = "Tell AI to type something!";
+      popupInput.placeholder = "What should i type?";
       popupInput.focus();
   }
   }
