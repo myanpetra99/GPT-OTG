@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
-    "name": "Input Focus Popup",
+    "name": "GPT-OTG",
     "version": "1.0",
-    "description": "Shows a popup when a user focuses on a text input box.",
+    "description": "ASK AI anytime and anywhere",
     "permissions": ["activeTab"],
     "content_scripts": [
       {
