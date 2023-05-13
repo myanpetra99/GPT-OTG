@@ -69,6 +69,12 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
   }
 }
 
+// list dictionary command
+const dictCommand = {
+  "/ai": "ASK",
+  "/typeai": "TYPE"
+}
+
 
 
 // create the popup
@@ -225,23 +231,37 @@ document.addEventListener("click", (event) => {
 window.addEventListener("keypress", captureEvent , true);
 window.addEventListener("keyup", captureEvent, true);
 
+document.addEventListener("input", (event) => {
+  if (isTextInput(event.target) && event.target.tagName !== "DIV") {
+      let command = Object.keys(dictCommand).find(key => event.target.value.trim().endsWith(key));
+
+      if (command) {
+          let mode = dictCommand[command];
+          event.target.value = event.target.value.slice(0, -command.length);
+
+          showPopup(popup, event.target, event.target); // Pass the focused input element
+          const popupInput = popup.querySelector(".popup-input");
+          popupInput.id = mode;
+          popupInput.placeholder = (mode === 'ASK') ? "Hello, May I help you?" : "Tell AI to type something!";
+          popupInput.focus();
+      }
+  }
+});
+
+
 function captureEvent(e) {
-    if (isTextInput(e.target) && e.target.textContent.trim().endsWith("/ai")) {
-        e.target.textContent = '' // Remove "/ai" from the input
-        mode = 'ASK'
-        showPopup(popup, e.target, e.target); // Pass the focused input element
-        const popupInput = popup.querySelector(".popup-input");
-        popupInput.id = mode
-        popupInput.placeholder = "Hello, May i help you?";
-        popupInput.focus();
-    }
-    if (isTextInput(e.target) && e.target.textContent.trim().endsWith("/typeai")) {
-      e.target.textContent = '' // Remove "/ai" from the input
-      mode = 'TYPE'
-      showPopup(popup, e.target, e.target); // Pass the focused input element
-      const popupInput = popup.querySelector(".popup-input");
-      popupInput.id = mode
-      popupInput.placeholder = "What should i type?";
-      popupInput.focus();
+  if (isTextInput(e.target)) {
+      let command = Object.keys(dictCommand).find(key => e.target.textContent.trim().endsWith(key));
+
+      if (command) {
+          let mode = dictCommand[command];
+          e.target.textContent = e.target.textContent.slice(0, -command.length);
+
+          showPopup(popup, e.target, e.target); // Pass the focused input element
+          const popupInput = popup.querySelector(".popup-input");
+          popupInput.id = mode;
+          popupInput.placeholder = (mode === 'ai') ? "Hello, May I help you?" : "What should I type?";
+          popupInput.focus();
+      }
   }
-  }
+}
