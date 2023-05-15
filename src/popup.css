@@ -2,7 +2,7 @@
   background-color: white;
   padding: 10px;
   box-sizing: border-box;
-  color: white;
+  color: rgb(0, 0, 0);
 }
 
 .popup-content:hover{

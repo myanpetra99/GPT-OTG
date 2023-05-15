@@ -87,6 +87,32 @@ function createPopup() {
   popup.style.width = "auto";
   popup.style.zIndex = "9999";
 
+  popup.onmousedown = (event) => {
+    isDragging = true;
+    prevMousePos = { x: event.clientX, y: event.clientY };
+  };
+
+  popup.onmouseup = () => {
+    isDragging = false;
+  };
+
+  popup.onmouseleave = () => {
+    isDragging = false;
+  };
+
+  popup.onmousemove = (event) => {
+    if (isDragging) {
+      const dx = event.clientX - prevMousePos.x;
+      const dy = event.clientY - prevMousePos.y;
+      const { offsetTop, offsetLeft } = popup;
+
+      popup.style.top = `${offsetTop + dy}px`;
+      popup.style.left = `${offsetLeft + dx}px`;
+
+      prevMousePos = { x: event.clientX, y: event.clientY };
+    }
+  };
+  
   const closeButton = document.createElement("button");
   closeButton.innerHTML = "&times;";
   closeButton.classList.add("popup-close-button");
@@ -186,12 +212,30 @@ function createPopup() {
 
 function showPopup(popup, target, inputTarget) {
   const targetRect = target.getBoundingClientRect();
+  const popupRect = popup.getBoundingClientRect();
+
+  // Calculate the space available at the bottom and top of the screen
+  const spaceBottom = window.innerHeight - (targetRect.bottom + window.pageYOffset);
+  const spaceTop = targetRect.top - window.pageYOffset;
+
+  // Check if the popup would overflow the bottom of the screen
+  const wouldOverflowBottom = spaceBottom < popupRect.height;
+
+  // If there's more space at the top or the popup would overflow the bottom
+  // then show it on top of the target, otherwise show it at the bottom
+  if (wouldOverflowBottom || spaceTop > spaceBottom) {
+    popup.style.top = `${targetRect.top - popupRect.height + window.pageYOffset}px`;
+  } else {
+    popup.style.top = `${targetRect.bottom + window.pageYOffset}px`;
+  }
+
   popup.style.opacity = 1;
   popup.style.display = "block";
   popup.style.left = `${targetRect.left}px`;
-  popup.style.top = `${targetRect.bottom + window.pageYOffset}px`;
-  popup.setAttribute("data-target-id", inputTarget.id); 
+
+  popup.setAttribute("data-target-id", inputTarget.id);
 }
+
 
 function hidePopup(popup, input, gptResult) {
   popup.style.display = "none";
