@@ -131,6 +131,7 @@ function createPopup() {
   };
   input.placeholder = "Ask AI!";
   input.classList.add("popup-input");
+  input.autocomplete = "off";
 
   inputWrapper.appendChild(input);
 
@@ -172,7 +173,10 @@ function createPopup() {
       const backupInput = input.value;
       input.value = "waiting response from AI...";
       input.disabled = true;
+      input.style.cursor = "not-allowed";
       if (userInput.length > 0) {
+        
+        input.style.cursor = "default";
         // Pass the callback function to fetchFreeGPTResponse
         fetchFreeGPTResponse(userInput, (chunk) => {
           const targetId = popup.getAttribute("data-target-id");
@@ -205,6 +209,8 @@ function createPopup() {
           }
         });
       }
+      
+      input.style.cursor = "default";
     }
   });
   return popup;
@@ -265,9 +271,11 @@ document.addEventListener("click", (event) => {
 
   // Check if the clicked element is outside the popup
   if (!popupWrapper.contains(event.target)) {
+  popup.style.transition = "all 0.5s ease-in-out";
 	popup.style.opacity = 0.3;
   }else{
 	  popup.style.opacity = 1;
+    popup.style.transitionDuration = "0s";
   }
 });
 
