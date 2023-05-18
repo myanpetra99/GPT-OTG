@@ -1,17 +1,24 @@
 {
-    "manifest_version": 2,
-    "name": "GPT-OTG",
-    "version": "1.0",
-    "description": "ASK AI anytime and anywhere",
-    "permissions": ["activeTab"],
-    "content_scripts": [
-      {
-        "matches": ["http://*/*", "https://*/*"],
-        "js": ["contentScript.bundle.js"],
-        "css": ["popup.css"],
-        "run_at": "document_end",
-        "all_frames": true
-      }
-    ]
-  }
-  
+  "manifest_version": 2,
+  "name": "GPT-OTG",
+  "version": "1.0",
+  "description": "ASK AI anytime and anywhere",
+  "permissions": ["activeTab", "tabs"],
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_title": "Open my React app"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["contentScript.bundle.js"],
+      "css": ["popup.css"],
+      "run_at": "document_end",
+      "all_frames": true
+    }
+  ]
+}
