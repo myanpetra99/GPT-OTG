@@ -3,9 +3,13 @@
     <img width="33%" src="https://user-images.githubusercontent.com/57763111/236892374-626e03c5-27eb-4771-afa8-e9daaa6adc83.png">
 </p>
 
-"Understood. How can I assist you today?"
+<p align="center">
+    <b>"Understood. How can I assist you today?"</b>
+</p>
 
-The AI Tools Chrome Extension is a simple, easy-to-use tool that helps you perform AI-based tasks right from your browser. You can do things like understanding human language (NLP), checking if a sentence is positive or negative (sentiment analysis), and lots more!
+<br>
+<br>
+GPT-OTG  is a simple, easy-to-use tool that helps you perform AI-based tasks right from your browser. You can do things like understanding human language (NLP), checking if a sentence is positive or negative (sentiment analysis), and lots more!
 
 
 ## How to install
@@ -14,26 +18,30 @@ To use the extension, do the following:
 1. The extension is not yet available on the Chrome Web Store. To install it, you'll need to use Developer Mode on Chrome://extensions.
 2. Download the extension from the Release section (link coming soon).
 3. In Chrome://extensions, choose "Load unpacked" and select the folder you downloaded.
-4. Once installed, you'll see the extension in your browser's toolbar.
+4. Once installed, you'll see the extension in your browser's toolbar and you're good to go!
+
+
+## How to use
+It's simple to use this extension. type "/AI" or "/Typeai" in the input field to activate the AI tools. 
+Just enter the command for the tool you want to use, and the AI will do the rest!
+(Please Visit Https://myanpetra99.github.io/GPT-OTG-WEB/#/Thankyou for little demonstration)
 
 ## Note
 This extension is a personal project and is not officially related to or endorsed by OpenAI's ChatGPT, even though it uses the API.
 
 
 ## What we're working on
-- Create a popup
-- Find an API (Right now, we're using a free API from [here](https://github.com/editor-syntax/gpt-free). Special thanks to [acheong08](https://github.com/acheong08))
-- Make a basic prompt that works
-- Make it work for most types of text input fields
-- Fix the design (CSS)
-- Make the initial prompt better
-- Make a landing page for the website
-- Add an option to use a custom API
+
+- [x] Create a popup
+- [x] Find an API (Right now, we're using a free API from [here](https://github.com/editor-syntax/gpt-free). Special thanks to [acheong08](https://github.com/acheong08))
+- [x] Make a basic prompt that works
+- [x] Make it work for most types of text input fields
+- [x] Fix the design (CSS)
+- [x] Make the initial prompt better
+- [x] Make a landing page for the website
+- [ ] Add an option to use a custom API
 - And much more!
 
-## How to use
-It's simple to use this extension. Click GPT-OTG extension icon in your toolbar, and a popup will appear. Then, type "/AI" in the input field to activate the AI tools. 
-Just enter the command for the tool you want to use, and the AI will do the rest!
 
 ## Need help?
 If you have any trouble using the extension, send me an email at myanpetra99@gmail.com / hello.michaelyanpetra@gmail.com. I'm always happy to accept pull requests or help improve my code.
