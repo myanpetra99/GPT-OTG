@@ -11,9 +11,9 @@ The AI Tools Chrome Extension is a handy tool that allows you to access artifici
 - [x] Looking for API (Currently using free API from here <a href="https://github.com/editor-syntax/gpt-free">editor-syntax/gpt-free</a> Special thanks to <a href="https://github.com/acheong08">acheong08</a>)
 - [x] Create a basic working prompt
 - [x] Make it work for most input/textarea/editable div 
-- [ ] Fix the css
+- [x] Fix the css
 - [ ] Improve the initial prompt
-- [ ] Create landing page website
+- [x] Create landing page website
 - [ ] a custom API Option
 - [ ] ..more
 
