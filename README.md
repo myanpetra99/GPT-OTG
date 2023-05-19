@@ -1,45 +1,48 @@
 # GPT-OTG
-![logo_transparent](https://user-images.githubusercontent.com/57763111/236892374-626e03c5-27eb-4771-afa8-e9daaa6adc83.png)
-
+<p align="center" width="100%">
+    <img width="33%" src="https://user-images.githubusercontent.com/57763111/236892374-626e03c5-27eb-4771-afa8-e9daaa6adc83.png">
+</p>
 
 "Understood. How can I assist you today?"
 
-The AI Tools Chrome Extension is a handy tool that allows you to access artificial intelligence functionalities quickly and easily. With this extension, you can run natural language processing (NLP) tasks, perform sentiment analysis, and much more. 
+The AI Tools Chrome Extension is a simple, easy-to-use tool that helps you perform AI-based tasks right from your browser. You can do things like understanding human language (NLP), checking if a sentence is positive or negative (sentiment analysis), and lots more!
 
-## TODO
-- [x] Create popup
-- [x] Looking for API (Currently using free API from here <a href="https://github.com/editor-syntax/gpt-free">editor-syntax/gpt-free</a> Special thanks to <a href="https://github.com/acheong08">acheong08</a>)
-- [x] Create a basic working prompt
-- [x] Make it work for most input/textarea/editable div 
-- [x] Fix the css
-- [ ] Improve the initial prompt
-- [x] Create landing page website
-- [ ] a custom API Option
-- [ ] ..more
 
-## Installation
+## How to install
+To use the extension, do the following:
 
-To use the AI Tools Chrome Extension, follow these steps:
+1. The extension is not yet available on the Chrome Web Store. To install it, you'll need to use Developer Mode on Chrome://extensions.
+2. Download the extension from the Release section (link coming soon).
+3. In Chrome://extensions, choose "Load unpacked" and select the folder you downloaded.
+4. Once installed, you'll see the extension in your browser's toolbar.
 
-1. Download the extension from the Chrome Web Store (TODO) / Release (TODO).
-2. Click the "Add to Chrome" button to install the extension / Open Chrome://Extension -> load unpacked -> select the folder.
-3. Once installed, the extension will appear in your browser's toolbar.
+## Note
+This extension is a personal project and is not officially related to or endorsed by OpenAI's ChatGPT, even though it uses the API.
 
-## Usage
 
-Using the this Chrome Extension is simple. Just click on the extension icon in your browser's toolbar, and a popup will appear. From there, type "/AI" in the input field to activate the AI tools. 
+## What we're working on
+- Create a popup
+- Find an API (Right now, we're using a free API from [here](https://github.com/editor-syntax/gpt-free). Special thanks to [acheong08](https://github.com/acheong08))
+- Make a basic prompt that works
+- Make it work for most types of text input fields
+- Fix the design (CSS)
+- Make the initial prompt better
+- Make a landing page for the website
+- Add an option to use a custom API
+- And much more!
 
-Simply type in the command for the tool you want to use, and the AI will generate the results for you. 
+## How to use
+It's simple to use this extension. Click GPT-OTG extension icon in your toolbar, and a popup will appear. Then, type "/AI" in the input field to activate the AI tools. 
+Just enter the command for the tool you want to use, and the AI will do the rest!
 
-## Support
+## Need help?
+If you have any trouble using the extension, send me an email at myanpetra99@gmail.com / hello.michaelyanpetra@gmail.com. I'm always happy to accept pull requests or help improve my code.
 
-If you encounter any issues while using the extension, please reach out me at myanpetra99@gmail.com / hello.michaelyanpetra@gmail.com. 
-Open for any PR and please fix my bad code :)
+## What's next?
+In the future, we're planning to add even more AI features to make this tool even better. We're also working on a way for you to use your own API endpoint. Our goal is to keep improving this extension to keep up with the latest advances in AI.
 
 ## Conclusion
-
-The AI Tools Chrome Extension is a powerful tool that allows you to access artificial intelligence functionalities quickly and easily. Install the extension, type "/AI" into the input field, and you're ready to go. With its range of features, the AI Tools Chrome Extension is a must-have for anyone looking to leverage the power of artificial intelligence.
-
+GPT-OTG Extension is a powerful, easy-to-use tool that puts AI at your fingertips. Just install the extension, type "/AI" in the input field, and you're good to go. It's a must-have for anyone who wants to use the power of AI in their everyday internet browsing.
 
 ----------------------------------------------------------------
-**P.S. This markdown was generated using /typeai command**
+**P.S. This markdown was written using the /typeai command**
