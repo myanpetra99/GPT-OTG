@@ -9,14 +9,14 @@
     "default_title": "Open my React app"
   },
   "background": {
-    "scripts": ["background.js"],
+    "scripts": ["background.min.js"],
     "persistent": false
   },
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["contentScript.bundle.js"],
-      "css": ["popup.css"],
+      "js": ["contentScript.min.js"],
+      "css": ["popup.min.css"],
       "run_at": "document_end",
       "all_frames": true
     }
