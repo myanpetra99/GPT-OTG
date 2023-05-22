@@ -14,6 +14,6 @@
     "webpack-cli": "^5.1.0"
   },
   "scripts": {
-    "build": "webpack && rimraf ./dist/popup.min.js"
+    "build": "webpack && rimraf ./dist/popup.js"
   }
 }

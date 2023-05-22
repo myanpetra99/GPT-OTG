@@ -12,7 +12,7 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: '[name].min.js',
+    filename: '[name].js',
   },
   module: {
     rules: [
@@ -36,7 +36,7 @@ module.exports = {
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: '[name].min.css',
+      filename: '[name].css',
     }),
     new CopyWebpackPlugin({
       patterns: [
