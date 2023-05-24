@@ -1,7 +1,8 @@
-# GPT-OTG
+# GPT-On The GO
 <p align="center" width="100%">
-    <img width="33%" src="https://user-images.githubusercontent.com/57763111/236892374-626e03c5-27eb-4771-afa8-e9daaa6adc83.png">
+    <img width="33%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/57763111/240456140-2b3f8d54-1492-4cb8-a5b1-dd5e651858cd.png">
 </p>
+
 
 <p align="center">
     <b>"Understood. How can I assist you today?"</b>
