@@ -2,6 +2,7 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
   mode: 'production',
@@ -42,7 +43,10 @@ module.exports = {
       patterns: [
         { from: 'src/manifest.json', to: 'manifest.json' },
         { from: 'src/icon.png', to: 'icon.png' },
+        { from: 'src/options.html', to: 'options.html' },
+        { from: 'src/options.js', to: 'options.js' },
+        { from: 'src/options.css', to: 'options.css' }
       ],
-    }),
-  ],
+    })
+  ]
 };

@@ -3,7 +3,7 @@
   "name": "GPT-OTG",
   "version": "1.0",
   "description": "ASK AI anytime and anywhere",
-  "permissions": ["activeTab", "tabs", "contextMenus"],
+  "permissions": ["activeTab", "tabs", "contextMenus", "storage"],
   "action": {
     "default_icon": "icon.png",
     "default_title": "Open"
@@ -19,5 +19,9 @@
       "run_at": "document_end",
       "all_frames": true
     }
-  ]
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
 }

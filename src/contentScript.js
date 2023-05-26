@@ -47,20 +47,27 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
         break;
       }
       buffer += decoder.decode(value, { stream: true });
-
+  
       while (true) {
         const nextNewline = buffer.indexOf("\n");
         if (nextNewline === -1) {
           break;
         }
-
+  
         const line = buffer.slice(0, nextNewline);
         buffer = buffer.slice(nextNewline + 1);
-
+  
         if (line.startsWith("data: ")) {
-          const chunkJson = JSON.parse(line.substring(6));
-          const chunkContent = chunkJson.choices[0].delta.content;
-          onChunkReceived(chunkContent); // Call the callback function with the new chunk
+          const jsonData = line.substring(6);
+          if (jsonData.trim() !== "[DONE]") { // ignore the [DONE] message
+            try {
+              const chunkJson = JSON.parse(jsonData);
+              const chunkContent = chunkJson.choices[0].delta.content;
+              onChunkReceived(chunkContent);
+            } catch (e) {
+              console.error('Invalid JSON:', e);
+            }
+          }
         }
       }
     }
@@ -68,11 +75,10 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     onChunkReceived("Sorry, something went wrong");
   }
 }
-
 // list dictionary command
 const dictCommand = {
-  "/ai": "ASK",
-  "/typeai": "TYPE"
+  "/ai": {service: 'gpt', mode: "ASK"},
+  "/typeai": {service: 'gpt', mode: "TYPE"}
 }
 
 
@@ -86,6 +92,8 @@ function createPopup() {
   popup.classList.add("popup-content");
   popup.style.width = "auto";
   popup.style.zIndex = "9999";
+  let isDragging = false
+  let prevMousePos = { x: 0, y: 0 };
 
   popup.onmousedown = (event) => {
     isDragging = true;
@@ -117,6 +125,13 @@ function createPopup() {
   closeButton.innerHTML = "&times;";
   closeButton.classList.add("popup-close-button");
   closeButton.onclick = () => hidePopup(popup, input, gptResult);
+
+  const gearButton = document.createElement("button");
+  gearButton.innerHTML = "&#9881;"; // Add gear icon as HTML entity
+  gearButton.classList.add("popup-gear-button"); // Add a CSS class to style the button
+
+// Append the gear button to the popup
+  popup.appendChild(gearButton);
 
   const inputWrapper = document.createElement("div");
   inputWrapper.style.display = "flex";
@@ -167,52 +182,53 @@ function createPopup() {
 
   input.addEventListener("keydown", async (event) => {
     if (event.key === "Enter") {
-      event.preventDefault();
-      gptResult.value = "";
-      const userInput = input.value.trim();
-      const backupInput = input.value;
-      input.value = "waiting response from AI...";
-      input.disabled = true;
-      input.style.cursor = "not-allowed";
-      if (userInput.length > 0) {
+        event.preventDefault();
+        gptResult.value = "";
+        const userInput = input.value.trim();
+        const backupInput = input.value;
+        input.disabled = true;
+        input.style.cursor = "not-allowed";
         
-        input.style.cursor = "default";
-        // Pass the callback function to fetchFreeGPTResponse
-        fetchFreeGPTResponse(userInput, (chunk) => {
-          const targetId = popup.getAttribute("data-target-id");
-          const targetElement = document.getElementById(targetId);
-          console.log('Ready to input chunk')
-          if (chunk === "Sorry, something went wrong") {
-            input.value = backupInput;
-            input.disabled = false;
-            gptResult.value += chunk;
-            return;
-          }
-          if (input.id === 'TYPE'){
-            if (targetElement) {
-              console.log('Elemement found')
-              if ((targetElement.tagName === "INPUT" || targetElement.tagName === "TEXTAREA") && targetElement ) {
-                targetElement.value += chunk;
-              } else if (targetElement.getAttribute("contenteditable") === "true") {
-                targetElement.innerHTML += chunk;
+        if (userInput.length > 0) {
+            input.style.cursor = "default";
+            // Check if the user wants to use BingChat or OpenAI's GPT
+            // Use OpenAI's GPT
+            fetchFreeGPTResponse(userInput, (chunk) => {
+
+              input.value = "waiting response from AI...";
+              const targetId = popup.getAttribute("data-target-id");
+              const targetElement = document.getElementById(targetId);
+              console.log('finding element..', targetElement, targetId)
+              console.log('Collecting chunk')
+              if (chunk === "Sorry, something went wrong") {
+                  input.value = backupInput;
+                  input.disabled = false;
+                  gptResult.value += chunk;
+                  return;
               }
-            }
-            input.value = "";
-            input.disabled = false;
-          }
-          else if (input.id === 'ASK'){
-            gptResult.value += chunk;
-            const contentWidth = gptResult.scrollWidth;
-            popupWrapper.style.width = `${contentWidth + 20}px`; // Update the width of the popupWrapper
-            input.value = "";
-            input.disabled = false;
-          }
-        });
-      }
-      
-      input.style.cursor = "default";
+              if (input.id === 'ASK'){
+                gptResult.value += chunk;
+                const contentWidth = gptResult.scrollWidth;
+                popupWrapper.style.width = `${contentWidth + 20}px`; // Update the width of the popupWrapper
+            }else {
+                  if (targetElement) {
+                      console.log('Element found')
+                      if ((targetElement.tagName === "INPUT" || targetElement.tagName === "TEXTAREA") && targetElement ) {
+                          targetElement.value += chunk;
+                      } else if (targetElement.getAttribute("contenteditable") === "true") {
+                          targetElement.innerHTML += chunk;
+                      }
+                  }
+              }
+          });
+        }
+        input.value = "";
+        input.disabled = false;
+        input.style.cursor = "default";
     }
-  });
+});
+
+
   return popup;
 }
 
@@ -288,18 +304,18 @@ document.addEventListener("input", (event) => {
       let command = Object.keys(dictCommand).find(key => event.target.value.trim().endsWith(key));
 
       if (command) {
-          let mode = dictCommand[command];
+          let config = dictCommand[command];
           event.target.value = event.target.value.slice(0, -command.length);
 
           showPopup(popup, event.target, event.target); // Pass the focused input element
           const popupInput = popup.querySelector(".popup-input");
-          popupInput.id = mode;
-          popupInput.placeholder = (mode === 'ASK') ? "Hello, May I help you?" : "Tell AI to type something!";
+          popupInput.id = config.mode;
+          popupInput.setAttribute('data-service', config.service);
+          popupInput.placeholder = (config.mode === 'ASK') ? "Hello, May I help you?" : "Tell AI to type something!";
           popupInput.focus();
       }
   }
 });
-
 
 function captureEvent(e) {
   if (isTextInput(e.target)) {
