@@ -15,6 +15,12 @@
 
 GPT-OTG  is a simple, easy-to-use tool that helps you perform AI-based tasks right from your browser. You can do things like understanding human language (NLP), checking if a sentence is positive or negative (sentiment analysis), and lots more!
 
+## Current Preview
+![3](https://github.com/myanpetra99/GPT-OTG/assets/57763111/53ac93cc-03b4-442b-a483-8e8281d1efdc)
+![2](https://github.com/myanpetra99/GPT-OTG/assets/57763111/e102425e-9fda-4353-863f-7b4aaefdb797)
+![1](https://github.com/myanpetra99/GPT-OTG/assets/57763111/e44aeece-8f32-405f-a9ce-2a963c7e3441)
+
+
 
 ## How to install
 To use the extension, do the following:
