@@ -10,6 +10,9 @@
 
 <br>
 <br>
+
+**It's been a busy weeks!, please help by contributing **
+
 GPT-OTG  is a simple, easy-to-use tool that helps you perform AI-based tasks right from your browser. You can do things like understanding human language (NLP), checking if a sentence is positive or negative (sentiment analysis), and lots more!
 
 
