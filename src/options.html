@@ -15,26 +15,31 @@
         <div id="contentWrapper">
             <div class="label-on-left">
               <label for="model">Select AI Model</label>
-              <select id="model">
+              <select id="model" disabled>
                 <option value="0">ChatGPT 3.5 Turbo</option>
                 <option value="1">ChatGPT 4</option>
                 <option value="2">Bing Chat</option>
                 <option value="4">Google Bard</option>
                 <option value="5">Add your API</option>
               </select>
-            </div>
-            <br /><br />
-    
-            <div class="label-on-left">
-              <label for="ai">Enable command '/ai'</label>
-              <input type="checkbox" id="ai" name="ai" value="ai" />
+              <label for="warning" class="warning"> (Currently disabled) </label>
             </div>
     
             <div class="label-on-left">
-              <label for="ai">initial prompt</label>
-              <textarea rows="7">
-    "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension and you could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked." </textarea
-              >
+              <label for="aiCommand">Enable command '/ai'</label>
+              <input type="checkbox" id="aiCommand" name="aiCommand" value="aiCommand" />
+            </div>
+
+            <div class="label-on-left">
+              <label for="googleSearch">Enable Google Search Sidebar
+
+              </label>
+              <input type="checkbox" id="googleSearch" name="googleSearch" value="googleSearch" />
+            </div>
+    
+            <div class="label-on-left">
+              <label for="initialPrompt">initial prompt</label>
+              <textarea id="initialPrompt" rows="7"></textarea>
             </div>
     
             </div>
