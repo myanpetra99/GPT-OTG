@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "GPT-OTG",
-  "version": "1.0",
-  "description": "ASK AI anytime and anywhere",
-  "permissions": ["activeTab", "tabs", "contextMenus", "storage"],
+  "name": "GPT-OTG DEVELOPMENT BUILD",
+  "version": "0.2.0",
+  "description": "THIS EXTENSION IS FOR BETA TESTING",
+  "permissions": ["activeTab", "contextMenus","webNavigation"],
   "action": {
     "default_icon": "icon.png",
     "default_title": "Open"

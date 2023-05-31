@@ -362,3 +362,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
   }
 });
+
+
+
+// In your content script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if(request.action === "injectInfo") {
+      // The ID of the sidebar might change, this is just an example
+      const sidebar = document.querySelector('#rhs');
+      const query = request.query
+      if(sidebar) {
+          const infoDiv = document.createElement('div');
+          infoDiv.textContent = query;
+          const input = document.querySelector(".popup-input");
+          const popup = document.getElementById("input-focus-popup");
+          const gptResult = popup.querySelector(".popup-gpt-result");
+          const selectedPrompt = "Explain to me shortly about :" + query;
+    
+          // Call fetchFreeGPTResponse to generate summary
+          fetchFreeGPTResponse(selectedPrompt, (chunk) => {
+            if (chunk === "Sorry, something went wrong") {
+              gptResult.value += chunk;
+              return;
+            }
+    
+            gptResult.value += chunk;
+            const contentWidth = gptResult.scrollWidth;
+            popup.style.width = `${contentWidth + 20}px`; // Update the width of the popup
+    
+            // Now show the popup
+            showPopup(popup, sidebar, input);
+          });
+      }
+  }
+});

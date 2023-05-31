@@ -26,6 +26,23 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
   }
 });
 
+// In your extension code, listen for URL changes
+chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
+  const url = new URL(details.url);
+  const isGoogleSearch = url.hostname.includes('google') && url.pathname.includes('search');
+
+  // Check if the current URL is a Google search
+  if(isGoogleSearch) {
+      // Get the search query from the URL
+      const query = url.searchParams.get('q');
+
+          chrome.tabs.sendMessage(details.tabId, {
+              action: "injectInfo",
+              query: query
+          });
+  }
+});
+
 chrome.runtime.onMessage.addListener(function(message) {
   switch (message.action) {
       case "openOptionsPage":
