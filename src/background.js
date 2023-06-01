@@ -57,6 +57,13 @@ chrome.runtime.onMessage.addListener(function(message) {
   }
 });
 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.message === "open_options_page") {
+      chrome.runtime.openOptionsPage();
+  }
+});
+
+
 function openOptionsPage(){
   chrome.runtime.openOptionsPage();
 }

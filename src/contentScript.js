@@ -8,13 +8,23 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     "Referrer-Policy": "strict-origin-when-cross-origin",
   };
 
+  let initialPrompt = "";
+  chrome.storage.sync.get('initialPrompt', function(items) {
+    initialPrompt = data.initialPrompt;
+});
+
+  //check if initial prompt is empty, if not use the "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked.",
+  //if empty use the initial prompt from the user
+  if (initialPrompt === "") {
+    initialPrompt = "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked."
+  }
+  
   const messages = [
     { role: "user", content: prompt },
     { role: "assistant", content: "" },
     {
       role: "system",
-      content:
-        "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked.",
+      content: initialPrompt,
     },
   ];
 
@@ -129,6 +139,9 @@ function createPopup() {
   const gearButton = document.createElement("button");
   gearButton.innerHTML = "&#9881;"; // Add gear icon as HTML entity
   gearButton.classList.add("popup-gear-button"); // Add a CSS class to style the button
+  gearButton.onclick = () => {
+    chrome.runtime.sendMessage({ message: "open_options_page" });
+}
 
 // Append the gear button to the popup
   popup.appendChild(gearButton);
