@@ -9,15 +9,17 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
   };
 
   let initialPrompt = "";
-  chrome.storage.sync.get('initialPrompt', function(items) {
-    initialPrompt = data.initialPrompt;
-});
+  try {
+    chrome.storage.sync.get('initialPrompt', function(items) {
+      initialPrompt = data.initialPrompt;
+  });
+  } catch (error) {
+    initialPrompt = "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked."
+  }
 
   //check if initial prompt is empty, if not use the "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked.",
   //if empty use the initial prompt from the user
-  if (initialPrompt === "") {
-    initialPrompt = "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked."
-  }
+ 
   
   const messages = [
     { role: "user", content: prompt },
@@ -201,18 +203,16 @@ function createPopup() {
         const backupInput = input.value;
         input.disabled = true;
         input.style.cursor = "not-allowed";
-        
+        input.value = "asking AI...";
         if (userInput.length > 0) {
             input.style.cursor = "default";
             // Check if the user wants to use BingChat or OpenAI's GPT
             // Use OpenAI's GPT
             fetchFreeGPTResponse(userInput, (chunk) => {
-
-              input.value = "waiting response from AI...";
               const targetId = popup.getAttribute("data-target-id");
               const targetElement = document.getElementById(targetId);
-              console.log('finding element..', targetElement, targetId)
               console.log('Collecting chunk')
+              input.value = "AI is thinking";
               if (chunk === "Sorry, something went wrong") {
                   input.value = backupInput;
                   input.disabled = false;
@@ -226,6 +226,7 @@ function createPopup() {
             }else {
                   if (targetElement) {
                       console.log('Element found')
+                      
                       if ((targetElement.tagName === "INPUT" || targetElement.tagName === "TEXTAREA") && targetElement ) {
                           targetElement.value += chunk;
                       } else if (targetElement.getAttribute("contenteditable") === "true") {
@@ -233,11 +234,12 @@ function createPopup() {
                       }
                   }
               }
-          });
-        }
+
         input.value = "";
         input.disabled = false;
-        input.style.cursor = "default";
+        input.style.cursor = "default"; 
+          });
+        }
     }
 });
 
@@ -246,6 +248,7 @@ function createPopup() {
 }
 
 function showPopup(popup, target, inputTarget) {
+if (target !== null){
   const targetRect = target.getBoundingClientRect();
   const popupRect = popup.getBoundingClientRect();
 
@@ -264,10 +267,11 @@ function showPopup(popup, target, inputTarget) {
     popup.style.top = `${targetRect.bottom + window.pageYOffset}px`;
   }
 
+  popup.style.left = `${targetRect.left}px`;
+}
+
   popup.style.opacity = 1;
   popup.style.display = "block";
-  popup.style.left = `${targetRect.left}px`;
-
   popup.setAttribute("data-target-id", inputTarget.id);
 }
 
@@ -319,7 +323,17 @@ document.addEventListener("input", (event) => {
       if (command) {
           let config = dictCommand[command];
           event.target.value = event.target.value.slice(0, -command.length);
-
+          
+        if (config.mode === 'TYPE') {
+          // Hide the 'popup-gpt-result' element
+          const popupGptResult = document.querySelector('.popup-gpt-result');
+          popupGptResult.style.display = 'none';
+          console.log('hide popup-gpt-result')
+      }else{
+          const popupGptResult = document.querySelector('.popup-gpt-result');
+          popupGptResult.style.display = 'block';
+          console.log('hide popup-gpt-result')
+      }
           showPopup(popup, event.target, event.target); // Pass the focused input element
           const popupInput = popup.querySelector(".popup-input");
           popupInput.id = config.mode;
@@ -356,7 +370,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const input = document.querySelector(".popup-input");
       const popup = document.getElementById("input-focus-popup");
       const gptResult = popup.querySelector(".popup-gpt-result");
-      const selectedPrompt = "summarize this paragraph :" + selectedText;
+      const selectedPrompt = "Provide a one-sentence summary of the following paragraph: " + selectedText;
 
       // Call fetchFreeGPTResponse to generate summary
       fetchFreeGPTResponse(selectedPrompt, (chunk) => {
@@ -368,10 +382,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         gptResult.value += chunk;
         const contentWidth = gptResult.scrollWidth;
         popup.style.width = `${contentWidth + 20}px`; // Update the width of the popup
+      });
 
         // Now show the popup
         showPopup(popup, input, input);
-      });
     }
   }
 });
@@ -390,7 +404,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           const input = document.querySelector(".popup-input");
           const popup = document.getElementById("input-focus-popup");
           const gptResult = popup.querySelector(".popup-gpt-result");
-          const selectedPrompt = "Explain to me shortly about :" + query;
+          const selectedPrompt = "In a single sentence, provide key information about: " + query;
     
           // Call fetchFreeGPTResponse to generate summary
           fetchFreeGPTResponse(selectedPrompt, (chunk) => {
@@ -403,9 +417,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             const contentWidth = gptResult.scrollWidth;
             popup.style.width = `${contentWidth + 20}px`; // Update the width of the popup
     
-            // Now show the popup
-            showPopup(popup, sidebar, input);
           });
+
+            // Now show the popup
+
+          showPopup(popup, null, input);
+          popup.style.position = "relative";
+
+          sidebar.prepend(popup);
+
       }
   }
 });

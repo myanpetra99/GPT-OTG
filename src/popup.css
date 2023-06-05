@@ -5,6 +5,7 @@
   color: rgb(0, 0, 0);
   border-radius: 0%;
   transition: all 0.5s ease-in-out;
+  min-width: fit-content;
 }
 
 .popup-content:hover{
@@ -112,10 +113,6 @@ input.form-control:focus {
   background-color: white;
 }
 
-.half-scroll {
-  overflow-y: scroll;
-  height: 10em; /* set the height of the textarea */
-}
 
 .half-scroll::-webkit-scrollbar-thumb {
   background-color: #ccc;
@@ -140,12 +137,3 @@ input.form-control:focus {
   position: relative;
 }
 
-.gradient-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background-image: linear-gradient(to top, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%); /* Replace the rgba(255, 255, 255, *) values with the background color of your text area */
-  pointer-events: none; /* Make the gradient unclickable */
-}
