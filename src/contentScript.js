@@ -1,5 +1,8 @@
 //ofc fetch the GPT Response!
+let ttsReady = false;
+
 async function fetchFreeGPTResponse(prompt, onChunkReceived) {
+  ttsReady = false;
   const url = "https://free.churchless.tech/v1/chat/completions";
   const headers = {
     "Content-Type": "application/json",
@@ -146,7 +149,37 @@ function createPopup() {
 }
 
 // Append the gear button to the popup
+
+const ttsButton = document.createElement("button");
+ttsButton.innerHTML = "TTS"; // Or any other label/icon you prefer
+ttsButton.classList.add("popup-tts-button"); // Add a CSS class to style the button
+popup.appendChild(ttsButton); // Add it next to the gear button
+ttsButton.onclick = () => {
+
+  if(ttsReady){
+    const gptResult = document.querySelector(".popup-gpt-result");
+    const utterance = new SpeechSynthesisUtterance(gptResult.value);
+  
+    // This function will be called when the list of voices has been populated
+    function setVoice() {
+      const voice = window.speechSynthesis.getVoices().find(voice => voice.name === 'Google US English');
+      if (voice) utterance.voice = voice;
+      window.speechSynthesis.speak(utterance);
+    }
+  
+    // If the voices are already loaded, use the desired voice immediately
+    if (window.speechSynthesis.getVoices().length) {
+      setVoice();
+    } else {
+      // If the voices are not yet loaded, wait for the voiceschanged event before setting the voice
+      window.speechSynthesis.onvoiceschanged = setVoice;
+    }
+  }
+};
+
   popup.appendChild(gearButton);
+
+
 
   const inputWrapper = document.createElement("div");
   inputWrapper.style.display = "flex";
@@ -238,6 +271,7 @@ function createPopup() {
         input.value = "";
         input.disabled = false;
         input.style.cursor = "default"; 
+        ttsReady = true;
           });
         }
     }
@@ -385,6 +419,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       });
 
         // Now show the popup
+        ttsReady = true;
         showPopup(popup, input, input);
     }
   }
@@ -408,6 +443,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
           // Call fetchFreeGPTResponse to generate summary
           fetchFreeGPTResponse(selectedPrompt, (chunk) => {
+            
             if (chunk === "Sorry, something went wrong") {
               gptResult.value += chunk;
               return;
@@ -420,7 +456,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           });
 
             // Now show the popup
-
+          ttsReady = true;
           showPopup(popup, null, input);
           popup.style.position = "relative";
 
