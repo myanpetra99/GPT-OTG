@@ -29,6 +29,7 @@ const DEFAULT_SETTINGS = {
 
 // Function to load settings
 function loadSettings() {
+    
     chrome.storage.sync.get(DEFAULT_SETTINGS, function(items) {
         document.getElementById('aiCommand').checked = items.aiCommand;
         document.getElementById('googleSearch').checked = items.googleSearch;
