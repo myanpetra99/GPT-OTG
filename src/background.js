@@ -32,31 +32,101 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
   }
 });
 
-// In your extension code, listen for URL changes
+// listen for google
+let lastSearchQuery = null;
+
 chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
-  console.log("This is the URL that triggered the listener: " + details.url)
+
+  const url = new URL(details.url);
+  const isGoogleSearch = url.hostname.includes('google') && url.pathname.includes('search');
+  if (isGoogleSearch) {
+
   chrome.storage.sync.get(DEFAULT_SETTINGS, function(data) {
     if (data.googleSearch) {
-      const url = new URL(details.url);
-      const isGoogleSearch = url.hostname.includes('google') && url.pathname.includes('search');
 
       // Check if the current URL is a Google search
-      if(isGoogleSearch) {
+
+        console.log("This is the Google URL that triggered the listener: " + details.url)
           // Get the search query from the URL
           const query = url.searchParams.get('q');
 
-          chrome.tabs.sendMessage(details.tabId, {
-              action: "injectInfo",
-              query: query
-          });
-      }
+          // Ignore if it's the same as the last query
+          if(query !== lastSearchQuery) {
+            console.log("This is the Google Search Query that triggered the listener: " + query)
+            lastSearchQuery = query;
+            chrome.tabs.sendMessage(details.tabId, {
+                action: "googleSearch",
+                query: query
+            });
+          } else{
+            console.log("This is the Google Search Query is same as last query: " + query + " and last query is: " + lastSearchQuery)
+            lastSearchQuery = null; 
+          }
+  } else {
+    // Reset lastSearchQuery if we navigate away from Google
+    chrome.storage.sync.set(DEFAULT_SETTINGS);
+};
+  });
+}});
+
+
+// listen for youtube
+// let lastVideoId = null;
+
+// chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
+//   chrome.storage.sync.get(DEFAULT_SETTINGS, function(data) {
+//     const url = new URL(details.url);
+//     const isYouTubeVideo = url.hostname.includes('youtube') && url.pathname.includes('watch');
+
+//     // Check if the current URL is a YouTube video
+//     if(isYouTubeVideo) {
+//         // Get the video ID from the URL
+//         const videoId = url.searchParams.get('v');
+
+//         // Ignore if it's the same as the last video
+//         if(videoId !== lastVideoId) {
+//             lastVideoId = videoId;
+//             console.log("This is the Youtube Video ID that triggered the listener: " + videoId)
+            
+//             chrome.tabs.sendMessage(details.tabId, {
+//                 action: "youtubeWatch",
+//                 videoId: videoId
+//             });
+//             console.log('fire event where action = youtubeWatch and videoid = ' + videoId + '')
+//         }else{
+//           console.log("This is the Youtube Video ID is same as last video: " + videoId + " and last video id is: " + lastVideoId)
+//         }
+//     } else {
+//         lastVideoId = null; // Reset lastVideoId if we navigate away from YouTube
+//         chrome.storage.sync.set(DEFAULT_SETTINGS);
+//     }
+//   });
+// });
+
+// listen for youtube
+chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
+  console.log("This is the URL that triggered the listener: " + details.url)
+  chrome.storage.sync.get(DEFAULT_SETTINGS, function(data) {
+    const url = new URL(details.url);
+    const isYouTubeVideo = url.hostname.includes('youtube') && url.pathname.includes('watch');
+
+    // Check if the current URL is a YouTube video
+    if(isYouTubeVideo) {
+        // Get the video ID from the URL
+        const videoId = url.searchParams.get('v');
+
+        chrome.tabs.sendMessage(details.tabId, {
+            action: "youtubeWatch",
+            videoId: videoId
+        });
     }else{
       chrome.storage.sync.set(DEFAULT_SETTINGS);
-      //refresh the page
-      chrome.tabs.reload();
     }
   });
 });
+
+
+
 
 chrome.runtime.onMessage.addListener(function(message) {
   switch (message.action) {

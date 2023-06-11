@@ -332,9 +332,9 @@ const popup = createPopup();
 
 document.addEventListener("click", (event) => {
   const popup = document.getElementById("input-focus-popup");
-  const popupWrapper = popup.querySelector(".popup-wrapper");
-  const input = popup.querySelector(".popup-input");
-  const gptResult = popup.querySelector(".popup-gpt-result");
+  const popupWrapper = document.querySelector(".popup-wrapper");
+  const input = document.querySelector(".popup-input");
+  const gptResult = document.querySelector(".popup-gpt-result");
 
   // Check if the clicked element is outside the popup
   if (!popupWrapper.contains(event.target)) {
@@ -349,6 +349,7 @@ document.addEventListener("click", (event) => {
  //thanks to @wOxxOm https://stackoverflow.com/questions/51014426/how-can-i-listen-for-keyboard-events-in-gmail 
 window.addEventListener("keypress", captureEvent , true);
 window.addEventListener("keyup", captureEvent, true);
+
 
 document.addEventListener("input", (event) => {
   if (isTextInput(event.target) && event.target.tagName !== "DIV") {
@@ -427,13 +428,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 
-// In your content script
+// Listen for google search event
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if(request.action === "injectInfo") {
+  if(request.action === "googleSearch") {
       // The ID of the sidebar might change, this is just an example
       const sidebar = document.querySelector('#rhs');
+      console.log("finding sidebar")
       const query = request.query
       if(sidebar) {
+        console.log('google sidebar found')
           const infoDiv = document.createElement('div');
           infoDiv.textContent = query;
           const input = document.querySelector(".popup-input");
@@ -464,4 +467,80 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       }
   }
+});
+
+
+// Listen for youtube watch event
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  if(request.action === "youtubeWatch") {
+    let transcriptText = "";
+    let author = '';
+    let title = '';
+    const input = document.querySelector(".popup-input");
+    const popup = document.getElementById("input-focus-popup");
+    const gptResult = document.querySelector(".popup-gpt-result");
+    const sidebar = document.getElementById('related');
+
+    // Check if the video ID is the same as the previous one and if the popup is shown
+    let previousVideoId = localStorage.getItem('YtVideoId');
+    let popupShown = localStorage.getItem('popupShown');
+    
+    // If the video id is not the same or the popup is not shown (i.e., popupShown is not "true")
+    if (request.videoId !== previousVideoId || popupShown !== "true") {
+      localStorage.setItem('YtVideoId', request.videoId);
+      console.log('video id setted')
+
+      try {
+        let response = await fetch(`https://yooutube-transcript-api.vercel.app/${request.videoId}`)
+        transcriptText = await response.text();
+      } catch (error) {
+        console.log('error getting transcript')
+      }
+
+      try {
+        let params = new URLSearchParams({
+          format: 'json',
+          url: `https://www.youtube.com/watch?v=${request.videoId}`
+        });
+
+        let url = "https://www.youtube.com/oembed?" + params;
+        response = await fetch(url)
+        let data = await response.json()
+        title = data.title;
+        author = data.author_name;
+      } catch (error) {
+        console.log('error getting title')
+      }
+
+      const prompt = `Summarize the Youtube video based on the title of the video : ${title}, the youtube channel called : ${author} , and the transcript ${transcriptText}. make the summary not too long and not too short.`;
+
+      if (title && author && transcriptText) {
+        fetchFreeGPTResponse(prompt, (chunk) => {
+        localStorage.setItem('popupShown', 'true');
+          if (chunk === "Sorry, something went wrong") {
+            gptResult.value += chunk;
+            return;
+          }
+
+          gptResult.value += chunk;
+          const contentWidth = gptResult.scrollWidth;
+          popup.style.width = `${contentWidth + 20}px`;
+
+        });
+
+        // Now show the popup
+        showPopup(popup, null, input);
+        popup.style.position = "relative";
+        sidebar.prepend(popup);
+        // Set popupShown to true
+      }
+    }
+  }
+});
+
+
+//show the popup on the initial page load but set it to display none
+document.addEventListener("DOMContentLoaded", function() {
+  showPopup(popup, null, null);
+  popup.style.display = 'none';
 });
