@@ -405,7 +405,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const input = document.querySelector(".popup-input");
       const popup = document.getElementById("input-focus-popup");
       const gptResult = popup.querySelector(".popup-gpt-result");
-      const selectedPrompt = "Provide a one-sentence summary of the following paragraph: " + selectedText;
+      const selectedPrompt = "Provide one or two paragraph summary of the following paragraph: " + selectedText;
 
       // Call fetchFreeGPTResponse to generate summary
       fetchFreeGPTResponse(selectedPrompt, (chunk) => {

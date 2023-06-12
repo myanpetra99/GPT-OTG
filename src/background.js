@@ -11,6 +11,7 @@ chrome.action.onClicked.addListener(function(activeTab) {
 });
 
 const DEFAULT_SETTINGS = {
+  youtubeSummary: true,
   aiCommand: true,
   googleSearch: true,
   initialPrompt: "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked."
@@ -70,7 +71,6 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
 }});
 
 
-// listen for youtube
 // let lastVideoId = null;
 
 // chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
