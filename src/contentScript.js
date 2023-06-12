@@ -314,6 +314,7 @@ function hidePopup(popup, input, gptResult) {
   popup.style.display = "none";
   input.value = "";
   gptResult.value = "";
+  localStorage.setItem("popupShown", "false");
 }
 
 function isTextInput(element) {
@@ -469,71 +470,74 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+//youtube get video function
+async function processVideo(videoId) {
+  let transcriptText = "";
+  let author = '';
+  let title = '';
+  const input = document.querySelector(".popup-input");
+  const popup = document.getElementById("input-focus-popup");
+  const gptResult = document.querySelector(".popup-gpt-result");
+  const sidebar = document.getElementById('related');
+
+  try {
+    let response = await fetch(`https://yooutube-transcript-api.vercel.app/${videoId}`)
+    transcriptText = await response.text();
+  } catch (error) {
+    console.log('error getting transcript')
+  }
+
+  try {
+    let params = new URLSearchParams({
+      format: 'json',
+      url: `https://www.youtube.com/watch?v=${videoId}`
+    });
+
+    let url = "https://www.youtube.com/oembed?" + params;
+    response = await fetch(url)
+    let data = await response.json()
+    title = data.title;
+    author = data.author_name;
+  } catch (error) {
+    console.log('error getting title')
+  }
+
+  const prompt = `Summarize the Youtube video based on the title of the video : ${title}, the youtube channel called : ${author} , and the transcript ${transcriptText}. make the summary not too long and not too short.`;
+
+  if (title && author && transcriptText) {
+    hidePopup(popup, input, gptResult);
+    fetchFreeGPTResponse(prompt, (chunk) => {
+      if (chunk === "Sorry, something went wrong") {
+        gptResult.value += chunk;
+        return;
+      }
+
+      gptResult.value += chunk;
+      const contentWidth = gptResult.scrollWidth;
+      popup.style.width = `${contentWidth + 20}px`;
+
+    });
+
+    // Now show the popup
+    showPopup(popup, null, input);
+    popup.style.position = "relative";
+    sidebar.prepend(popup);
+    // Set popupShown to true
+    localStorage.setItem('popupShown', 'true');
+  }
+}
+
 
 // Listen for youtube watch event
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if(request.action === "youtubeWatch") {
-    let transcriptText = "";
-    let author = '';
-    let title = '';
-    const input = document.querySelector(".popup-input");
-    const popup = document.getElementById("input-focus-popup");
-    const gptResult = document.querySelector(".popup-gpt-result");
-    const sidebar = document.getElementById('related');
-
-    // Check if the video ID is the same as the previous one and if the popup is shown
-    let previousVideoId = localStorage.getItem('YtVideoId');
-    let popupShown = localStorage.getItem('popupShown');
+    const previousVideoId = localStorage.getItem('YtVideoId');
+    const popupShown = localStorage.getItem('popupShown');
     
-    // If the video id is not the same or the popup is not shown (i.e., popupShown is not "true")
+    // If the video id is not the same or the popup is not shown
     if (request.videoId !== previousVideoId || popupShown !== "true") {
       localStorage.setItem('YtVideoId', request.videoId);
-      console.log('video id setted')
-
-      try {
-        let response = await fetch(`https://yooutube-transcript-api.vercel.app/${request.videoId}`)
-        transcriptText = await response.text();
-      } catch (error) {
-        console.log('error getting transcript')
-      }
-
-      try {
-        let params = new URLSearchParams({
-          format: 'json',
-          url: `https://www.youtube.com/watch?v=${request.videoId}`
-        });
-
-        let url = "https://www.youtube.com/oembed?" + params;
-        response = await fetch(url)
-        let data = await response.json()
-        title = data.title;
-        author = data.author_name;
-      } catch (error) {
-        console.log('error getting title')
-      }
-
-      const prompt = `Summarize the Youtube video based on the title of the video : ${title}, the youtube channel called : ${author} , and the transcript ${transcriptText}. make the summary not too long and not too short.`;
-
-      if (title && author && transcriptText) {
-        fetchFreeGPTResponse(prompt, (chunk) => {
-        localStorage.setItem('popupShown', 'true');
-          if (chunk === "Sorry, something went wrong") {
-            gptResult.value += chunk;
-            return;
-          }
-
-          gptResult.value += chunk;
-          const contentWidth = gptResult.scrollWidth;
-          popup.style.width = `${contentWidth + 20}px`;
-
-        });
-
-        // Now show the popup
-        showPopup(popup, null, input);
-        popup.style.position = "relative";
-        sidebar.prepend(popup);
-        // Set popupShown to true
-      }
+      await processVideo(request.videoId);
     }
   }
 });

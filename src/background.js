@@ -104,6 +104,7 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
 // });
 
 // listen for youtube
+
 chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
   console.log("This is the URL that triggered the listener: " + details.url)
   chrome.storage.sync.get(DEFAULT_SETTINGS, function(data) {
