@@ -1,7 +1,14 @@
 # GPT-On The GO
+![download](https://img.shields.io/github/downloads/myanpetra99/gpt-otg/total)
+![license](https://img.shields.io/github/license/myanpetra99/gpt-otg)
+![issues](https://img.shields.io/github/issues/myanpetra99/gpt-otg)
+![lastcommit](https://img.shields.io/github/last-commit/myanpetra99/gpt-otg)
+![toplanguage](https://img.shields.io/github/languages/top/myanpetra99/gpt-otg)
+[![stability-alpha](https://img.shields.io/badge/stability-alpha-f4d03f.svg)](https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#alpha)
 <p align="center" width="100%">
     <img width="33%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/57763111/240456140-2b3f8d54-1492-4cb8-a5b1-dd5e651858cd.png">
 </p>
+
 
 
 <p align="center">
