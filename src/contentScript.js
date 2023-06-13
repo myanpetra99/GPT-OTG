@@ -314,7 +314,7 @@ function hidePopup(popup, input, gptResult) {
   popup.style.display = "none";
   input.value = "";
   gptResult.value = "";
-  localStorage.setItem("popupShown", "false");
+  sessionStorage.setItem("popupShown", "false");
 }
 
 function isTextInput(element) {
@@ -523,7 +523,7 @@ async function processVideo(videoId) {
     popup.style.position = "relative";
     sidebar.prepend(popup);
     // Set popupShown to true
-    localStorage.setItem('popupShown', 'true');
+    sessionStorage.setItem('popupShown', 'true');
   }
 }
 
@@ -531,12 +531,12 @@ async function processVideo(videoId) {
 // Listen for youtube watch event
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if(request.action === "youtubeWatch") {
-    const previousVideoId = localStorage.getItem('YtVideoId');
-    const popupShown = localStorage.getItem('popupShown');
+    const previousVideoId = sessionStorage.getItem('YtVideoId');
+    const popupShown = sessionStorage.getItem('popupShown');
     
     // If the video id is not the same or the popup is not shown
     if (request.videoId !== previousVideoId || popupShown !== "true") {
-      localStorage.setItem('YtVideoId', request.videoId);
+      sessionStorage.setItem('YtVideoId', request.videoId);
       await processVideo(request.videoId);
     }
   }

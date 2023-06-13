@@ -70,41 +70,7 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
   });
 }});
 
-
-// let lastVideoId = null;
-
-// chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
-//   chrome.storage.sync.get(DEFAULT_SETTINGS, function(data) {
-//     const url = new URL(details.url);
-//     const isYouTubeVideo = url.hostname.includes('youtube') && url.pathname.includes('watch');
-
-//     // Check if the current URL is a YouTube video
-//     if(isYouTubeVideo) {
-//         // Get the video ID from the URL
-//         const videoId = url.searchParams.get('v');
-
-//         // Ignore if it's the same as the last video
-//         if(videoId !== lastVideoId) {
-//             lastVideoId = videoId;
-//             console.log("This is the Youtube Video ID that triggered the listener: " + videoId)
-            
-//             chrome.tabs.sendMessage(details.tabId, {
-//                 action: "youtubeWatch",
-//                 videoId: videoId
-//             });
-//             console.log('fire event where action = youtubeWatch and videoid = ' + videoId + '')
-//         }else{
-//           console.log("This is the Youtube Video ID is same as last video: " + videoId + " and last video id is: " + lastVideoId)
-//         }
-//     } else {
-//         lastVideoId = null; // Reset lastVideoId if we navigate away from YouTube
-//         chrome.storage.sync.set(DEFAULT_SETTINGS);
-//     }
-//   });
-// });
-
-// listen for youtube
-
+//youtube history state updated
 chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
   console.log("This is the URL that triggered the listener: " + details.url)
   chrome.storage.sync.get(DEFAULT_SETTINGS, function(data) {
@@ -125,8 +91,6 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
     }
   });
 });
-
-
 
 
 chrome.runtime.onMessage.addListener(function(message) {
