@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('aiCommand').addEventListener('change', enableSaveReset);
     document.getElementById('googleSearch').addEventListener('change', enableSaveReset);
     document.getElementById('initialPrompt').addEventListener('input', enableSaveReset);
-    document.getElementById('youtubeSummary').addEventListener('input', enableSaveReset);
+    document.getElementById('youtubeSummary').addEventListener('change', enableSaveReset);
 });
   
 // Default settings
@@ -49,7 +49,8 @@ function saveSettings() {
     let aiCommand = document.getElementById('aiCommand').checked;
     let googleSearch = document.getElementById('googleSearch').checked;
     let initialPrompt = document.getElementById('initialPrompt').value;
-    let youtubeSummary = document.getElementById('youtubeSummary').value;
+    let youtubeSummary = document.getElementById('youtubeSummary').checked;
+
     chrome.storage.sync.set({
         aiCommand: aiCommand,
         googleSearch: googleSearch,

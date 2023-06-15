@@ -505,7 +505,7 @@ async function processVideo(videoId) {
   const prompt = `Summarize the Youtube video based on the title of the video : ${title}, the youtube channel called : ${author} , and the transcript ${transcriptText}. make the summary not too long and not too short.`;
 
   if (title && author && transcriptText) {
-    hidePopup(popup, input, gptResult);
+
     fetchFreeGPTResponse(prompt, (chunk) => {
       if (chunk === "Sorry, something went wrong") {
         gptResult.value += chunk;
@@ -533,7 +533,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if(request.action === "youtubeWatch") {
     const previousVideoId = sessionStorage.getItem('YtVideoId');
     const popupShown = sessionStorage.getItem('popupShown');
-    
     // If the video id is not the same or the popup is not shown
     if (request.videoId !== previousVideoId || popupShown !== "true") {
       sessionStorage.setItem('YtVideoId', request.videoId);
