@@ -9,6 +9,7 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     Accept: "*/*",
     Referer: "https://bettergpt.chat/",
     "Referrer-Policy": "strict-origin-when-cross-origin",
+    Authorization: '<<API KEY>>' //Find them in https://discord.gg/9K2BvbXEHT and go to #announcements channel
   };
 
   let initialPrompt = "";
