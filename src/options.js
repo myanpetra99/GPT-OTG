@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Attach event listeners for changes to input fields
+    document.getElementById('tune').addEventListener('change', enableSaveReset);
+    document.getElementById('model').addEventListener('change', enableSaveReset);
     document.getElementById('aiCommand').addEventListener('change', enableSaveReset);
     document.getElementById('googleSearch').addEventListener('change', enableSaveReset);
     document.getElementById('initialPrompt').addEventListener('input', enableSaveReset);
@@ -23,6 +25,8 @@ document.addEventListener("DOMContentLoaded", function () {
   
 // Default settings
 const DEFAULT_SETTINGS = {
+    tune:'balance',
+    gptModel: "gpt-3.5-turbo",
     youtubeSummary: true,
     aiCommand: true,
     googleSearch: true,
@@ -33,6 +37,8 @@ const DEFAULT_SETTINGS = {
 function loadSettings() {
     
     chrome.storage.sync.get(DEFAULT_SETTINGS, function(items) {
+        document.getElementById('tune').value = items.tune;
+        document.getElementById('model').value = items.gptModel;
         document.getElementById('aiCommand').checked = items.aiCommand;
         document.getElementById('googleSearch').checked = items.googleSearch;
         document.getElementById('youtubeSummary').checked = items.youtubeSummary;
@@ -46,12 +52,16 @@ function loadSettings() {
 
 // Function to save settings
 function saveSettings() {
+    let tune = document.getElementById('tune').value;
+    let gptModel = document.getElementById('model').value;
     let aiCommand = document.getElementById('aiCommand').checked;
     let googleSearch = document.getElementById('googleSearch').checked;
     let initialPrompt = document.getElementById('initialPrompt').value;
     let youtubeSummary = document.getElementById('youtubeSummary').checked;
-
+    
     chrome.storage.sync.set({
+        tune: tune,
+        gptModel: gptModel,
         aiCommand: aiCommand,
         googleSearch: googleSearch,
         initialPrompt: initialPrompt,
@@ -68,6 +78,8 @@ function saveSettings() {
 // Function to reset settings
 function resetSettings() {
     // Reset to default settings
+    document.getElementById('tune').value = DEFAULT_SETTINGS.tune;
+    document.getElementById('model').value = DEFAULT_SETTINGS.gptModel;
     document.getElementById('aiCommand').checked = DEFAULT_SETTINGS.aiCommand;
     document.getElementById('googleSearch').checked = DEFAULT_SETTINGS.googleSearch;
     document.getElementById('initialPrompt').value = DEFAULT_SETTINGS.initialPrompt;

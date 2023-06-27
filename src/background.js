@@ -5,6 +5,7 @@ chrome.action.onClicked.addListener(function(activeTab) {
 });
 
 const DEFAULT_SETTINGS = {
+  tune: 'balance',
   youtubeSummary: true,
   aiCommand: true,
   googleSearch: true,

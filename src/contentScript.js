@@ -3,13 +3,26 @@ let ttsReady = false;
 
 async function fetchFreeGPTResponse(prompt, onChunkReceived) {
   ttsReady = false;
-  const url = "https://free.churchless.tech/v1/chat/completions";
+  let url = '';
+  let Authorization = '';
+  let model = '';
+  let tune  = {temp:0.5,top:0.5};
+    chrome.storage.sync.get('gptModel', function(items) {
+      if (items.gptModel) {
+        model = items.gptModel;
+      }
+      else{
+        model = "gpt-3.5-turbo";
+      }
+    });
+  console.log("Currently using model : " + model)
+  model == "gpt-3.5-turbo" ? Authorization = "Bearer MyDiscord" : Authorization = "";
+  model == "gpt-3.5-turbo" ? url = "https://free.churchless.tech/v1/chat/completions" : url = "";
   const headers = {
     "Content-Type": "application/json",
     Accept: "*/*",
-    Referer: "https://bettergpt.chat/",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    Authorization: '<<API KEY>>' //Find them in https://discord.gg/9K2BvbXEHT and go to #announcements channel
+    Authorization: Authorization
   };
 
   let initialPrompt = "";
@@ -34,12 +47,34 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     },
   ];
 
+  let tuned = {};
+
+  chrome.storage.sync.get('tune', function(items) {
+    if (items.tune) {
+      if(tune == "balance"){
+        tuned.temperature = 0.5;
+        tuned.topP = 0.5;
+    }else if(tune == "creative"){
+        tuned.temperature = 0.1;
+        tuned.topP = 0.1;
+    }else if(tune == "precise"){
+        tuned.temperature = 1;
+        tuned.topP = 1;
+    }
+    }
+    else{
+      tuned.temperature = 0.5;
+        tuned.topP = 0.5;
+    }
+  });
+
+
   const payload = {
     messages: messages,
-    model: "gpt-3.5-turbo",
-    temperature: 1,
+    model: model,
+    temperature: tune.temperature,
     presence_penalty: 0,
-    top_p: 1,
+    top_p: tune.top_p,
     frequency_penalty: 0,
     stream: true,
   };
@@ -53,6 +88,7 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
   });
 
   if (response.ok) {
+    console.log('GPT Model:'+ model)
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -101,6 +137,7 @@ const dictCommand = {
 
 // create the popup
 function createPopup() {
+  
   const popup = document.createElement("div");
   popup.id = "input-focus-popup";
   popup.style.display = "none";
@@ -147,6 +184,8 @@ function createPopup() {
   gearButton.classList.add("popup-gear-button"); // Add a CSS class to style the button
   gearButton.onclick = () => {
     chrome.runtime.sendMessage({ message: "open_options_page" });
+
+  
 }
 
 // Append the gear button to the popup
@@ -213,15 +252,10 @@ ttsButton.onclick = () => {
 
   const gptResult = document.createElement("textarea");
   gptResult.classList.add("popup-gpt-result");
-  gptResult.classList.add("half-scroll");
   gptResult.readOnly = true;
-
-  const gradientOverlay = document.createElement("div");
-  gradientOverlay.classList.add("gradient-overlay");
 
 
   textareaWrapper.appendChild(gptResult);
-  textareaWrapper.appendChild(gradientOverlay);
 
   inputWrapper.appendChild(gptResult);
 
@@ -273,7 +307,7 @@ ttsButton.onclick = () => {
         input.disabled = false;
         input.style.cursor = "default"; 
         ttsReady = true;
-          });
+          },);
         }
     }
 });
