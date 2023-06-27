@@ -6,7 +6,6 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
   let url = '';
   let Authorization = '';
   let model = '';
-  let tune  = {temp:0.5,top:0.5};
     chrome.storage.sync.get('gptModel', function(items) {
       if (items.gptModel) {
         model = items.gptModel;
@@ -16,8 +15,8 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
       }
     });
   console.log("Currently using model : " + model)
-  model == "gpt-3.5-turbo" ? Authorization = "Bearer MyDiscord" : Authorization = "";
-  model == "gpt-3.5-turbo" ? url = "https://free.churchless.tech/v1/chat/completions" : url = "";
+  model == "gpt-3.5-turbo" ? Authorization = "Bearer MyDiscord" : Authorization = "Bearer MyDiscord";
+  model == "gpt-3.5-turbo" ? url = "https://free.churchless.tech/v1/chat/completions" : url = "https://free.churchless.tech/v1/chat/completions";
   const headers = {
     "Content-Type": "application/json",
     Accept: "*/*",
@@ -64,7 +63,7 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     }
     else{
       tuned.temperature = 0.5;
-        tuned.topP = 0.5;
+      tuned.topP = 0.5;
     }
   });
 
@@ -72,9 +71,9 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
   const payload = {
     messages: messages,
     model: model,
-    temperature: tune.temperature,
+    temperature: 1,
     presence_penalty: 0,
-    top_p: tune.top_p,
+    top_p: 1,
     frequency_penalty: 0,
     stream: true,
   };
@@ -279,7 +278,7 @@ ttsButton.onclick = () => {
             fetchFreeGPTResponse(userInput, (chunk) => {
               const targetId = popup.getAttribute("data-target-id");
               const targetElement = document.getElementById(targetId);
-              console.log('Collecting chunk')
+              console.log(chunk)
               input.value = "AI is thinking";
               if (chunk === "Sorry, something went wrong") {
                   input.value = backupInput;
@@ -287,20 +286,22 @@ ttsButton.onclick = () => {
                   gptResult.value += chunk;
                   return;
               }
-              if (input.id === 'ASK'){
-                gptResult.value += chunk;
-                const contentWidth = gptResult.scrollWidth;
-                popupWrapper.style.width = `${contentWidth + 20}px`; // Update the width of the popupWrapper
-            }else {
-                  if (targetElement) {
-                      console.log('Element found')
-                      
-                      if ((targetElement.tagName === "INPUT" || targetElement.tagName === "TEXTAREA") && targetElement ) {
-                          targetElement.value += chunk;
-                      } else if (targetElement.getAttribute("contenteditable") === "true") {
-                          targetElement.innerHTML += chunk;
-                      }
-                  }
+              if (chunk){
+                if (input.id === 'ASK'){
+                  gptResult.value += chunk;
+                  const contentWidth = gptResult.scrollWidth;
+                  popupWrapper.style.width = `${contentWidth + 20}px`; // Update the width of the popupWrapper
+              }else {
+                    if (targetElement) {
+                        console.log('Element found')
+                        
+                        if ((targetElement.tagName === "INPUT" || targetElement.tagName === "TEXTAREA") && targetElement ) {
+                            targetElement.value += chunk;
+                        } else if (targetElement.getAttribute("contenteditable") === "true") {
+                            targetElement.innerHTML += chunk;
+                        }
+                    }
+                }
               }
 
         input.value = "";
