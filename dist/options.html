@@ -15,14 +15,23 @@
         <div id="contentWrapper">
             <div class="label-on-left">
               <label for="model">Select AI Model</label>
-              <select id="model" disabled>
-                <option value="0">ChatGPT 3.5 Turbo</option>
-                <option value="1">ChatGPT 4</option>
-                <option value="2">Bing Chat</option>
-                <option value="4">Google Bard</option>
-                <option value="5">Add your API</option>
+              <select id="model">
+                <option selected value="gpt-3.5-turbo">ChatGPT 3.5 Turbo</option>
+                <option value="gpt-4">ChatGPT 4</option>
+                <option value="bing">Bing Chat</option>
+                <option value="bard">Google Bard</option>
+                <option value="custom">Add your API</option>
               </select>
-              <label for="warning" class="warning"> (Currently disabled) </label>
+            </div>
+
+
+            <div class="label-on-left">
+              <label for="tune">Tune the model</label>
+              <select id="tune">
+                <option value="creative">Creative</option>
+                <option selected value="balance">Balance</option>
+                <option value="precise">Precise</option>
+              </select>
             </div>
     
             <div class="label-on-left">
@@ -35,6 +44,13 @@
 
               </label>
               <input type="checkbox" id="googleSearch" name="googleSearch" value="googleSearch" />
+            </div>
+
+            <div class="label-on-left">
+              <label for="youtubeSummary">Enable Youtube Summary Sidebar
+
+              </label>
+              <input type="checkbox" id="youtubeSummary" name="youtubeSummary" value="youtubeSummary" />
             </div>
     
             <div class="label-on-left">

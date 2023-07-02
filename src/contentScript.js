@@ -17,6 +17,7 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
   console.log("Currently using model : " + model)
   model == "gpt-3.5-turbo" ? Authorization = "Bearer MyDiscord" : Authorization = "Bearer MyDiscord";
   model == "gpt-3.5-turbo" ? url = "https://free.churchless.tech/v1/chat/completions" : url = "https://free.churchless.tech/v1/chat/completions";
+  
   const headers = {
     "Content-Type": "application/json",
     Accept: "*/*",
@@ -50,13 +51,13 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
 
   chrome.storage.sync.get('tune', function(items) {
     if (items.tune) {
-      if(tune == "balance"){
+      if(items.tune == "balance"){
         tuned.temperature = 0.5;
         tuned.topP = 0.5;
-    }else if(tune == "creative"){
+    }else if(items.tune == "creative"){
         tuned.temperature = 0.1;
         tuned.topP = 0.1;
-    }else if(tune == "precise"){
+    }else if(items.tune == "precise"){
         tuned.temperature = 1;
         tuned.topP = 1;
     }
@@ -113,7 +114,10 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
           if (jsonData.trim() !== "[DONE]") { // ignore the [DONE] message
             try {
               const chunkJson = JSON.parse(jsonData);
-              const chunkContent = chunkJson.choices[0].delta.content;
+              let chunkContent = chunkJson.choices[0].delta.content;
+              if (typeof chunkContent === "undefined") {
+                 chunkContent = ""; // Set to empty string if content is undefined
+              }
               onChunkReceived(chunkContent);
             } catch (e) {
               console.error('Invalid JSON:', e);
@@ -286,7 +290,6 @@ ttsButton.onclick = () => {
                   gptResult.value += chunk;
                   return;
               }
-              if (chunk){
                 if (input.id === 'ASK'){
                   gptResult.value += chunk;
                   const contentWidth = gptResult.scrollWidth;
@@ -302,7 +305,6 @@ ttsButton.onclick = () => {
                         }
                     }
                 }
-              }
 
         input.value = "";
         input.disabled = false;
