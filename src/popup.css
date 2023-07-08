@@ -154,3 +154,26 @@ input.form-control:focus {
   position: relative;
 }
 
+.yt-button {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #fff;
+  background-color: #ff0000;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 2px;
+  text-transform: uppercase;
+  outline: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.yt-button:hover {
+  background-color: #e60000;
+}
+
+.yt-button:hover {
+  background-color: #E62117; /* Darken button slightly when hovering */
+}
