@@ -57,6 +57,9 @@ This extension is a personal project and is not officially related to or endorse
 - [x] Fix the design (CSS)
 - [x] Make the initial prompt better
 - [x] Make a landing page for the website
+- [x] Make a Youtube Summarize
+- [x] Make a google Button helper
+- [x] Create more contextMenu (basically extra static prompt)
 - [ ] Add an option to use a custom API
 - And much more!
 
