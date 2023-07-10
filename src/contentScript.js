@@ -368,14 +368,15 @@ function createPopup() {
         ytButton.classList.add("yt-button");
         ytButton.innerText = "Summarize";
 
-        waitForElm("#actions.item.style-scope.ytd-watch-metadata").then(
+        waitForElm("#top-level-buttons-computed.top-level-buttons.style-scope.ytd-menu-renderer").then(
           (elm) => {
             console.log("Element is ready");
 
-            const actionbar = document.querySelector(
-              "#actions.item.style-scope.ytd-watch-metadata"
+            const actionbar = document.querySelectorAll(
+              "#top-level-buttons-computed.top-level-buttons.style-scope.ytd-menu-renderer"
             );
-            actionbar.prepend(ytButton);
+            
+            actionbar[1].prepend(ytButton);
           }
         );
         console.log("youtube button appended");
@@ -477,6 +478,11 @@ function createPopup() {
 
     if (request.text === "summarize") {
       // Get the selected text from the request
+      const mousePosition = request.mousePosition;
+
+      console.log(mousePosition.x);
+      console.log(mousePosition.y);
+
       const selectedText = request.selectionText;
       if (selectedText) {
         // Show the popup and set the input value to the selected text
@@ -501,7 +507,7 @@ function createPopup() {
 
         // Now show the popup
         ttsReady = true;
-        showPopup(popup, input, input);
+        showPopup(popup, null, input, { x: mousePosition.x, y: mousePosition.y });
       }
     }
     if (request.text === "chat") {
@@ -522,6 +528,13 @@ function createPopup() {
     }
 
     if (request.text === "explain") {
+      // Get the selected text from the request
+      const mousePosition = request.mousePosition;
+
+      console.log(mousePosition.x);
+      console.log(mousePosition.y);
+
+      
       // Get the selected text from the request
       const selectedText = request.selectionText;
       if (selectedText) {
@@ -549,7 +562,7 @@ function createPopup() {
 
         // Now show the popup
         ttsReady = true;
-        showPopup(popup, input, input);
+        showPopup(popup, null, input, { x: mousePosition.x, y: mousePosition.y });
       }
     }
   });
@@ -723,8 +736,10 @@ window.addEventListener("keyup", captureEvent, true);
 
 let lastMousePosition = { x: 0, y: 0 };
 
-window.addEventListener("mousemove", function (event) {
-  lastMousePosition = { x: event.clientX, y: event.clientY };
+document.addEventListener('contextmenu', function(event) {
+  lastMousePosition.x = event.clientX;
+  lastMousePosition.y = event.clientY;
+  console.log('Last mouse position:', lastMousePosition);
 });
 
 document.addEventListener("input", (event) => {

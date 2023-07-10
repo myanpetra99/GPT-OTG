@@ -52,7 +52,14 @@ chrome.runtime.onInstalled.addListener(function() {
 
 chrome.contextMenus.onClicked.addListener(function(info, tab) {
   if (info.menuItemId === "summarize") {
-      chrome.tabs.sendMessage(tab.id, {text: 'summarize', selectionText: info.selectionText});
+    chrome.tabs.sendMessage(tab.id, {text: 'getMousePosition'}, function(response) {
+      const {x, y} = response;
+
+      // Then send the position to the tab
+      console.log("This is the mouse position: " + x + " " + y)
+
+    chrome.tabs.sendMessage(tab.id, {text: 'summarize', selectionText: info.selectionText, mousePosition: {x: x, y: y}});
+    });
   }
  
   if (info.menuItemId === "chat") {
@@ -67,7 +74,14 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
   }
 
   if (info.menuItemId === "explain") {
-    chrome.tabs.sendMessage(tab.id, {text: 'explain', selectionText: info.selectionText});
+    chrome.tabs.sendMessage(tab.id, {text: 'getMousePosition'}, function(response) {
+      const {x, y} = response;
+
+      // Then send the position to the tab
+      console.log("This is the mouse position: " + x + " " + y)
+
+    chrome.tabs.sendMessage(tab.id, {text: 'explain', selectionText: info.selectionText, mousePosition: {x: x, y: y}});
+    });
   }
 });
 
@@ -122,37 +136,12 @@ chrome.runtime.onMessage.addListener(async function (request) {
   
     const url = new URL(request.url);
     const isYouTubeVideo = url.hostname.includes('youtube') && url.pathname.includes('watch');
-    
-    console.log('checking if the url is youtube video')
+  
     if (isYouTubeVideo) {
-      console.log('Yes it is!')
-      const videoId = url.searchParams.get('v');
-      let currentvideoid = await chrome.storage.session.get('currentYTid')
-      console.log('session storage : '+ currentvideoid.currentYTid + "| video id : "+videoId)
-      if (currentvideoid.currentYTid !== videoId) {
-      
-        await chrome.storage.session.set({ currentYTid: videoId });
-        
-        console.log("video id is not the same");
-  
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-          var activeTab = tabs[0];
-          chrome.tabs.sendMessage(activeTab.id, { action: "youtubeWatch", videoId: videoId });
-        });
-  
-      } else {
-        console.log("video id is same, checking for popup shown...")
-        let popupShown = await chrome.storage.session.get(["popupShown"]);
-  
-        console.log('popup shown : '+ popupShown.popupShown)
-        if (!popupShown.popupShown) {
-          console.log('popup not shown, calling the AI..')
-          chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            var activeTab = tabs[0];
-            chrome.tabs.sendMessage(activeTab.id, { action: "youtubeWatch", videoId: videoId });
-          });
-        }
-      }
+      chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+        var activeTab = tabs[0];
+        chrome.tabs.sendMessage(activeTab.id, { action: "createYoutubeSummaryButton"});
+      });
     } else {
       console.log('Not sending message to content script, url is not a YT video'); // <-- Debugging line
     }
