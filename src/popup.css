@@ -160,7 +160,8 @@ input.form-control:focus {
   padding: 10px 16px;
   border: none;
   border-radius: 30px;
-  text-transform: uppercase;
+  text-transform: capitalize;
+  font-weight: 500;
   margin-right: 5px;
   outline: none;
   cursor: pointer;
@@ -169,5 +170,5 @@ input.form-control:focus {
 }
 
 .yt-button:hover {
-  background-color: var(--yt-spec-badge-chip-background-hover);
+  background-color: var(--yt-spec-mono-tonal-hover);
 }

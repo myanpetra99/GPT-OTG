@@ -1,9 +1,15 @@
 {
   "manifest_version": 3,
   "name": "GPT-OTG DEVELOPMENT BUILD",
-  "version": "0.3.2",
+  "version": "0.4.2",
   "description": "THIS EXTENSION IS FOR BETA TESTING",
-  "permissions": ["activeTab", "contextMenus","webNavigation", "storage"],
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "webNavigation",
+    "storage",
+    "tabs"
+  ],
   "action": {
     "default_title": "Open"
   },
@@ -12,9 +18,16 @@
   },
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["contentScript.js"],
-      "css": ["popup.css"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "contentScript.js"
+      ],
+      "css": [
+        "popup.css"
+      ],
       "run_at": "document_end",
       "all_frames": true
     }

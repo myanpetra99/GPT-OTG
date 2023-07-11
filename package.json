@@ -14,7 +14,8 @@
     "webpack-cli": "^5.1.0"
   },
   "scripts": {
-    "update": "git pull && npm run build",
-    "build": "webpack && rimraf ./dist/popup.js"
+    "dev" : "node prepareDev.js",
+    "update": "git pull && npm run dev",
+    "build": "node prepareBuild.js && webpack && rimraf ./dist/popup.js"
   }
 }

@@ -342,19 +342,6 @@ function createPopup() {
     sender,
     sendResponse
   ) {
-    if (request.action === "getURL") {
-      let url = window.location.href;
-      const url2 = new URL(url);
-      const isYouTubeVideo =
-        url2.hostname.includes("youtube") && url2.pathname.includes("watch");
-
-      if (isYouTubeVideo) {
-        chrome.runtime.sendMessage({ action: "sendURL", url: url });
-        console.log(
-          "send url to back! :" + url + " to the tab id: " + request.tabId
-        );
-      }
-    }
 
     if (request.action === "createYoutubeSummaryButton") {
       
@@ -363,30 +350,35 @@ function createPopup() {
       const url2 = new URL(url);
       const isYouTubeVideo =url2.hostname.includes("youtube") && url2.pathname.includes("watch");
       if (isYouTubeVideo) {
-        const ytButton = document.createElement("button");
-        ytButton.id = "youtubeButton";
-        ytButton.classList.add("yt-button");
-        ytButton.innerText = "Summarize";
-
         waitForElm("#top-level-buttons-computed.top-level-buttons.style-scope.ytd-menu-renderer").then(
           (elm) => {
             console.log("Element is ready");
-
-            const actionbar = document.querySelectorAll(
+      
+            const actionbar = document.querySelector(
               "#top-level-buttons-computed.top-level-buttons.style-scope.ytd-menu-renderer"
             );
-            
-            actionbar[1].prepend(ytButton);
+      
+            // Check if the button already exists
+            if (!actionbar.querySelector("#youtubeButton")) {
+              const ytButton = document.createElement("button");
+              ytButton.id = "youtubeButton";
+              ytButton.classList.add("yt-button");
+              ytButton.innerText = "Summarize";
+              
+              actionbar.prepend(ytButton);
+              
+              console.log("youtube button appended");
+      
+              ytButton.addEventListener("click", async () => {
+                await AutoProcessVideo();
+              });
+            }
           }
         );
-        console.log("youtube button appended");
-
-        ytButton.addEventListener("click", async () => {
-          await AutoProcessVideo();
-        });
       } else {
         console.log("not youtube");
       }
+      
     }
 
     if (request.action === "googleSearch") {
@@ -794,10 +786,6 @@ function captureEvent(e) {
     }
   }
 }
-
-//youtube get video function
-//youtube get video function
-
 
 //show the popup on the initial page load but set it to display none
 document.addEventListener("DOMContentLoaded", function () {

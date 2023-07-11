@@ -122,29 +122,24 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
 
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  chrome.tabs.sendMessage(tabId, {action: 'getURL', tabId: tabId});
+  
+  const url = new URL(tab.url);
+  const isYouTubeVideo = url.hostname.includes('youtube') && url.pathname.includes('watch');
+
+  if (isYouTubeVideo) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      var activeTab = tabs[0];
+      chrome.tabs.sendMessage(activeTab.id, { action: "createYoutubeSummaryButton"});
+    });
+  } else {
+    console.log('Not sending message to content script, url is not a YT video'); // <-- Debugging line
+  }
 });
 
 chrome.runtime.onMessage.addListener(async function (request) {
 
   if (request.action === 'OpenOptionsPage') {
     openOptionsPage();
-  }
-
-  if (request.action === 'sendURL') {
-    console.log('get response from content script: ' + request.url); // <-- Debugging line
-  
-    const url = new URL(request.url);
-    const isYouTubeVideo = url.hostname.includes('youtube') && url.pathname.includes('watch');
-  
-    if (isYouTubeVideo) {
-      chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        var activeTab = tabs[0];
-        chrome.tabs.sendMessage(activeTab.id, { action: "createYoutubeSummaryButton"});
-      });
-    } else {
-      console.log('Not sending message to content script, url is not a YT video'); // <-- Debugging line
-    }
   }
   
 });
