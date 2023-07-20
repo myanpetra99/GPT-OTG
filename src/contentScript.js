@@ -400,7 +400,6 @@ function createPopup() {
               const targetClass = popup.getAttribute("data-target-class");
               const targetElements = document.getElementsByClassName(targetClass);
               if (targetElements.length > 0) {
-                console.log("Element found");
                 if (
                   (targetElements[0].tagName === "INPUT" ||
                     targetElements[0].tagName === "TEXTAREA") &&
@@ -789,8 +788,16 @@ function showPopup(popup, target, inputTarget, mousePos) {
 
   popup.style.opacity = 1;
   popup.style.display = "block";
+
+  if ( inputTarget.id !== null && inputTarget.id !== undefined && inputTarget.id !== "") {
   popup.setAttribute("data-target-id", inputTarget.id);
-  popup.setAttribute("data-target-class", inputTarget.className);
+  } else {
+  inputTarget.id = "GPT-OTG-TARGET-ID";
+  popup.setAttribute("data-target-id", inputTarget.id);
+  }
+  if ( inputTarget.classList !== null && inputTarget.classList !== undefined ) {
+  popup.setAttribute("data-target-class", inputTarget.classList[0]);
+  }
 }
 
 async function hidePopup(popup, input, gptResult) {
