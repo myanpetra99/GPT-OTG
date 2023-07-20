@@ -425,49 +425,53 @@ function createPopup() {
       const url2 = new URL(url);
       const isYouTubeVideo =url2.hostname.includes("youtube") && url2.pathname.includes("watch");
       if (isYouTubeVideo) {
-        waitForElm("#top-level-buttons-computed.top-level-buttons.style-scope.ytd-menu-renderer").then(
+        waitForElm("#actions.item.style-scope.ytd-watch-metadata").then(
           (elm) => {
             console.log("Element is ready");
       
             const actionbar = document.querySelector(
-              "#top-level-buttons-computed.top-level-buttons.style-scope.ytd-menu-renderer"
+              "#actions.item.style-scope.ytd-watch-metadata"
             );
       
             // Check if the button already exists
-            if (!actionbar.querySelector("#youtubeButton")) {
-              const ytButton = document.createElement("button");
-              ytButton.id = "youtubeButton";
-              ytButton.classList.add("yt-button");
-              ytButton.innerText = "Summarize";
+            if (actionbar.querySelector("#top-level-buttons-computed.top-level-buttons.style-scope.ytd-menu-renderer")) {
+              const toplevel = actionbar.querySelector("#top-level-buttons-computed.top-level-buttons.style-scope.ytd-menu-renderer")
+              if (!toplevel.querySelector("#youtubeButton")) {
+                const ytButton = document.createElement("button");
+                ytButton.id = "youtubeButton";
+                ytButton.classList.add("yt-button");
+                ytButton.innerText = "Summarize";
+                
+                const tooltip = document.createElement("tp-yt-paper-tooltip");
+                tooltip.id = "tooltip";
+                tooltip.className = "hidden";
+                tooltip.setAttribute("style-target", "tooltip"); // Here is the custom attribute
+                tooltip.innerText = "Summarize this video with GPT-OTG";
+                
+                ytButton.appendChild(tooltip);
+                
+                toplevel.prepend(ytButton);
+                
+                console.log("youtube button appended");
               
-              const tooltip = document.createElement("tp-yt-paper-tooltip");
-              tooltip.id = "tooltip";
-              tooltip.className = "hidden";
-              tooltip.setAttribute("style-target", "tooltip"); // Here is the custom attribute
-              tooltip.innerText = "Summarize this video with GPT-OTG";
-              
-              ytButton.appendChild(tooltip);
-              
-              actionbar.prepend(ytButton);
-              
-              console.log("youtube button appended");
-            
-              ytButton.addEventListener("mouseenter", () => {
-                tooltip.classList.remove("hidden");
-              });
-              
-              ytButton.addEventListener("mouseleave", () => {
-                tooltip.classList.add("hidden");
-              });
-              
-              ytButton.addEventListener("click", async () => {
-                await AutoProcessVideo();
-              });
+                ytButton.addEventListener("mouseenter", () => {
+                  tooltip.classList.remove("hidden");
+                });
+                
+                ytButton.addEventListener("mouseleave", () => {
+                  tooltip.classList.add("hidden");
+                });
+                
+                ytButton.addEventListener("click", async () => {
+                  await AutoProcessVideo();
+                });
+              }
             }
             
             
           }
         );
+       
       } else {
         console.log("not youtube");
       }
