@@ -373,7 +373,6 @@ function createPopup() {
         fetchFreeGPTResponse(userInput, (chunk) => {
           const targetId = popup.getAttribute("data-target-id");
           const targetElement = document.getElementById(targetId);
-          console.log(chunk);
           input.value = "AI is thinking";
           if (chunk === "Sorry, something went wrong") {
             input.value = backupInput;
@@ -386,7 +385,6 @@ function createPopup() {
           } else {
             if (targetElement) {
               console.log("Element found");
-
               if (
                 (targetElement.tagName === "INPUT" ||
                   targetElement.tagName === "TEXTAREA") &&
@@ -397,6 +395,23 @@ function createPopup() {
                 targetElement.getAttribute("contenteditable") === "true"
               ) {
                 targetElement.innerHTML += chunk;
+              }
+            } else {
+              const targetClass = popup.getAttribute("data-target-class");
+              const targetElements = document.getElementsByClassName(targetClass);
+              if (targetElements.length > 0) {
+                console.log("Element found");
+                if (
+                  (targetElements[0].tagName === "INPUT" ||
+                    targetElements[0].tagName === "TEXTAREA") &&
+                  targetElements[0]
+                ) {
+                  targetElements[0].value += chunk;
+                } else if (
+                  targetElements[0].getAttribute("contenteditable") === "true"
+                ) {
+                  targetElements[0].innerHTML += chunk;
+                }
               }
             }
           }
@@ -775,6 +790,7 @@ function showPopup(popup, target, inputTarget, mousePos) {
   popup.style.opacity = 1;
   popup.style.display = "block";
   popup.setAttribute("data-target-id", inputTarget.id);
+  popup.setAttribute("data-target-class", inputTarget.className);
 }
 
 async function hidePopup(popup, input, gptResult) {
@@ -816,7 +832,6 @@ document.addEventListener("click", (event) => {
   }
 });
 
-//thanks to @wOxxOm https://stackoverflow.com/questions/51014426/how-can-i-listen-for-keyboard-events-in-gmail
 window.addEventListener("keypress", captureEvent, true);
 window.addEventListener("keyup", captureEvent, true);
 
@@ -842,11 +857,9 @@ document.addEventListener("input", (event) => {
         // Hide the 'popup-gpt-result' element
         const popupGptResult = document.querySelector("#popup-gpt-result");
         popupGptResult.style.display = "none";
-        console.log("hide popup-gpt-result");
       } else {
         const popupGptResult = document.querySelector("#popup-gpt-result");
         popupGptResult.style.display = "block";
-        console.log("hide popup-gpt-result");
       }
       showPopup(popup, event.target, event.target); // Pass the focused input element
       const popupInput = popup.querySelector(".popup-input");
