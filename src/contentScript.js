@@ -2,17 +2,19 @@
 let ttsReady = false;
 
 async function fetchFreeGPTResponse(prompt, onChunkReceived) {
+  document.querySelector(".popup-suggestion-wrapper").innerHTML = "";
   ttsReady = false;
   let url = "";
   let Authorization = "";
   let model = "";
-  await chrome.storage.sync.get("gptModel", function (items) {
+  model = "gpt-3.5-turbo"
+  /*wait chrome.storage.sync.get("gptModel", function (items) {
     if (items.gptModel) {
       model = items.gptModel;
     } else {
       model = "gpt-3.5-turbo";
     }
-  });
+  });*/
   console.log("Currently using model : " + model);
   model == "gpt-3.5-turbo"
     ? (Authorization = "Bearer MyDiscord")
@@ -27,16 +29,16 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     Authorization: Authorization,
   };
-
+  
+/*
   let initialPrompt = "";
-  try {
+ try {
     await chrome.storage.sync.get("initialPrompt", function (items) {
       initialPrompt = data.initialPrompt;
     });
   } catch (error) {
-    initialPrompt =
-      "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked.";
-  }
+    initialPrompt ="You are ChatGPT, a large language model trained by OpenAI. Your role is to provide succinct, relevant responses to user queries. At the end of each interaction, offer one or more suggestions for future questions the user might ask. Each suggestion should start with the phrase 'Suggestion: ', followed by the number and the question text.For instance, if a user asks 'Who is Spiderman?', you might suggest: 'Suggestion 1: How strong is Spiderman?' and 'Suggestion 2: Who are some of Spiderman's most formidable enemies?'.Users may summon you anywhere online by typing '/ai' or '/typeai'. If a user requests you to create content such as posts, captions, emails, or letters, provide only the required text without any leading phrases (e.g., 'Sure, here is...') or concluding remarks. Your response should be focused solely on fulfilling the user's request. Please respond using markdown.";
+  }*/
 
   //check if initial prompt is empty, if not use the "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked.",
   //if empty use the initial prompt from the user
@@ -46,7 +48,11 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     { role: "assistant", content: "" },
     {
       role: "system",
-      content: initialPrompt,
+      content: `You are ChatGPT, a large language model trained by OpenAI. 
+      Your role is to provide succinct, relevant responses to user queries. 
+      Users may summon you anywhere online by typing '/ai' or '/typeai'. If a user requests you to create content such as posts, captions, emails, or letters, 
+      provide only the required text without any leading phrases (e.g., 'Sure, here is...') or concluding remarks. 
+      Your response should be focused solely on fulfilling the user's request. Respond using Markdown.`
     },
   ];
 
@@ -65,19 +71,21 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
         tuned.topP = 1;
       }
     } else {
-      tuned.temperature = 0.5;
-      tuned.topP = 0.5;
+      tuned.temperature = 1;
+      tuned.topP = 1;
     }
   });
 
-  const payload = {
+  stream = true
+  
+  let payload = {
     messages: messages,
     model: model,
     temperature: 1,
     presence_penalty: 0,
     top_p: 1,
     frequency_penalty: 0,
-    stream: true,
+    stream: stream,
   };
 
   const response = await fetch(url, {
@@ -88,49 +96,109 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
     mode: "cors",
   });
 
-  if (response.ok) {
-    console.log("GPT Model:" + model);
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      buffer += decoder.decode(value, { stream: true });
-
+  if ( stream ) {
+    if (response.ok) {
+      console.log("GPT Model:" + model);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+  
       while (true) {
-        const nextNewline = buffer.indexOf("\n");
-        if (nextNewline === -1) {
+        const { done, value } = await reader.read();
+        if (done) {
           break;
         }
-
-        const line = buffer.slice(0, nextNewline);
-        buffer = buffer.slice(nextNewline + 1);
-
-        if (line.startsWith("data: ")) {
-          const jsonData = line.substring(6);
-          if (jsonData.trim() !== "[DONE]") {
-            // ignore the [DONE] message
-            try {
-              const chunkJson = JSON.parse(jsonData);
-              let chunkContent = chunkJson.choices[0].delta.content;
-              if (typeof chunkContent === "undefined") {
-                chunkContent = ""; // Set to empty string if content is undefined
+        buffer += decoder.decode(value, { stream: true });
+  
+        while (true) {
+          const nextNewline = buffer.indexOf("\n");
+          if (nextNewline === -1) {
+            break;
+          }
+  
+          const line = buffer.slice(0, nextNewline);
+          buffer = buffer.slice(nextNewline + 1);
+  
+          if (line.startsWith("data: ")) {
+            const jsonData = line.substring(6);
+            if (jsonData.trim() !== "[DONE]") {
+              try {
+                const chunkJson = JSON.parse(jsonData);
+                let chunkContent = chunkJson.choices[0].delta.content;
+                if (typeof chunkContent === "undefined") {
+                  chunkContent = ""; // Set to empty string if content is undefined
+                }
+                onChunkReceived(chunkContent);
+              } catch (e) {
+                console.error("Invalid JSON:", e);
               }
-              onChunkReceived(chunkContent);
-            } catch (e) {
-              console.error("Invalid JSON:", e);
             }
           }
         }
       }
+    } else {
+      onChunkReceived("Sorry, something went wrong");
     }
   } else {
-    onChunkReceived("Sorry, something went wrong");
+    if (response.ok) {
+      console.log("GPT Model:" + model);
+      const data = await response.json();
+      let chunkContent = data.choices[0].message.content;
+      if (typeof chunkContent === "undefined") {
+        chunkContent = ""; // Set to empty string if content is undefined
+      }
+      onChunkReceived(chunkContent);
+    } else {
+      onChunkReceived("Sorry, something went wrong");
+    }
   }
+
+  let gptResult = document.querySelector("#popup-gpt-result").textContent;
+  payload.stream = false;
+  payload.messages[1].content = gptResult;
+  payload.messages[2].content = `provide one or more suggestions based on the user prompt and your response.
+  These suggestions should follow this specific format: [{"suggestion": "1", "text": "Your question here"}, {"suggestion": "2", "text": "Your second question here"}]. 
+  For instance, if a user asks 'Who is Spiderman?', you should end your response EXACTLY LIKE THIS: "GPT-SUGGEST: [{"suggestion": "1", text: "How strong is Spiderman?"}, {"suggestion": "2", "text": "Who are some of Spiderman's most formidable enemies?"}]". 
+  No leading or trailing phrases should be used around these suggestions; they should follow immediately after the answer to the initial query.`;
+  
+  const responseSuggest = await fetch(url, {
+    method: "POST",
+    headers: headers,
+    body: JSON.stringify(payload),
+    credentials: "omit",
+    mode: "cors",
+  });
+
+//...
+if (responseSuggest.ok) {
+  console.log("GPT Model:" + model);
+  const data = await responseSuggest.json();
+  let chunkContent = data.choices[0].message.content;
+  if (typeof chunkContent === "undefined") {
+    chunkContent = "";
+  }
+  console.log(chunkContent);
+
+  const suggestIndex = chunkContent.indexOf("GPT-SUGGEST:");
+  if (suggestIndex !== -1) {
+      chunkContent = chunkContent.slice(suggestIndex + "GPT-SUGGEST:".length);
+  }
+
+  console.log(chunkContent);
+const suggestions = JSON.parse(chunkContent);
+suggestions.forEach((suggestion) => {
+  const button = document.createElement("button");
+  button.innerHTML = suggestion.text;
+  button.classList.add('suggestion-button'); // Add any CSS classes if you want
+  button.addEventListener("click", () => {
+    document.querySelector("#popup-gpt-result").textContent = "";
+    fetchFreeGPTResponse(suggestion.text, onChunkReceived);
+  });
+
+  document.querySelector(".popup-suggestion-wrapper").appendChild(button);
+});
+
+} 
 }
 // list dictionary command
 const dictCommand = {
@@ -216,8 +284,8 @@ function createPopup() {
   popup.appendChild(ttsButton); // Add it next to the gear button
   ttsButton.onclick = () => {
     if (ttsReady) {
-      const gptResult = document.querySelector(".popup-gpt-result");
-      const utterance = new SpeechSynthesisUtterance(gptResult.value);
+      const gptResult = document.querySelector("#popup-gpt-result");
+      const utterance = new SpeechSynthesisUtterance(gptResult.textContent);
 
       // This function will be called when the list of voices has been populated
       function setVoice() {
@@ -257,6 +325,11 @@ function createPopup() {
 
   inputWrapper.appendChild(input);
 
+  const suggestionWrapper = document.createElement("div");
+  suggestionWrapper.style.display = "flex";
+  suggestionWrapper.style.flexDirection = "column";
+  suggestionWrapper.classList.add("popup-suggestion-wrapper");
+
   // Add a wrapper for the popup
   const popupWrapper = document.createElement("div");
   popupWrapper.classList.add("popup-wrapper");
@@ -268,13 +341,17 @@ function createPopup() {
   const textareaWrapper = document.createElement("div");
   textareaWrapper.classList.add("textarea-container");
 
-  const gptResult = document.createElement("textarea");
-  gptResult.classList.add("popup-gpt-result");
+  const gptResult = document.createElement("span");
+  gptResult.setAttribute('id',"popup-gpt-result");
+  gptResult.setAttribute('role',"textbox");
+  gptResult.setAttribute('contenteditable',"true");
   gptResult.readOnly = true;
 
   textareaWrapper.appendChild(gptResult);
 
   inputWrapper.appendChild(gptResult);
+
+  inputWrapper.appendChild(suggestionWrapper);
 
   popup.appendChild(popupWrapper);
 
@@ -283,7 +360,7 @@ function createPopup() {
   input.addEventListener("keydown", async (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      gptResult.value = "";
+      gptResult.textContent = "";
       const userInput = input.value.trim();
       const backupInput = input.value;
       input.disabled = true;
@@ -301,13 +378,11 @@ function createPopup() {
           if (chunk === "Sorry, something went wrong") {
             input.value = backupInput;
             input.disabled = false;
-            gptResult.value += chunk;
+            gptResult.textContent += chunk;
             return;
           }
           if (input.id === "ASK") {
-            gptResult.value += chunk;
-            const contentWidth = gptResult.scrollWidth;
-            popupWrapper.style.width = `${contentWidth + 20}px`; // Update the width of the popupWrapper
+            gptResult.textContent += chunk;
           } else {
             if (targetElement) {
               console.log("Element found");
@@ -365,14 +440,32 @@ function createPopup() {
               ytButton.classList.add("yt-button");
               ytButton.innerText = "Summarize";
               
+              const tooltip = document.createElement("tp-yt-paper-tooltip");
+              tooltip.id = "tooltip";
+              tooltip.className = "hidden";
+              tooltip.setAttribute("style-target", "tooltip"); // Here is the custom attribute
+              tooltip.innerText = "Summarize this video with GPT-OTG";
+              
+              ytButton.appendChild(tooltip);
+              
               actionbar.prepend(ytButton);
               
               console.log("youtube button appended");
-      
+            
+              ytButton.addEventListener("mouseenter", () => {
+                tooltip.classList.remove("hidden");
+              });
+              
+              ytButton.addEventListener("mouseleave", () => {
+                tooltip.classList.add("hidden");
+              });
+              
               ytButton.addEventListener("click", async () => {
                 await AutoProcessVideo();
               });
             }
+            
+            
           }
         );
       } else {
@@ -405,20 +498,19 @@ function createPopup() {
           infoDiv.textContent = query;
           const input = document.querySelector(".popup-input");
           const popup = document.getElementById("input-focus-popup");
-          const gptResult = document.querySelector(".popup-gpt-result");
+          const gptResult = document.querySelector("#popup-gpt-result");
           const selectedPrompt =
             "In a single sentence, provide key information about: " + query;
 
           // Call fetchFreeGPTResponse to generate summary
           fetchFreeGPTResponse(selectedPrompt, (chunk) => {
             if (chunk === "Sorry, something went wrong") {
-              gptResult.value += chunk;
+              gptResult.textContent += chunk;
               return;
             }
 
-            gptResult.value += chunk;
-            const contentWidth = gptResult.scrollWidth;
-            popup.style.width = `${contentWidth + 20}px`; // Update the width of the popup
+            gptResult.textContent += chunk;
+            
           });
 
           // Now show the popup
@@ -437,20 +529,20 @@ function createPopup() {
             infoDiv.textContent = query;
             const input = document.querySelector(".popup-input");
             const popup = document.getElementById("input-focus-popup");
-            const gptResult = document.querySelector(".popup-gpt-result");
+            const gptResult = document.querySelector("#popup-gpt-result");
             const selectedPrompt =
               "In a single sentence, provide key information about: " + query;
 
             // Call fetchFreeGPTResponse to generate summary
             fetchFreeGPTResponse(selectedPrompt, (chunk) => {
               if (chunk === "Sorry, something went wrong") {
-                gptResult.value += chunk;
+                gptResult.textContent += chunk;
                 return;
               }
 
-              gptResult.value += chunk;
-              const contentWidth = gptResult.scrollWidth;
-              popup.style.width = `${contentWidth + 20}px`; // Update the width of the popup
+              gptResult.textContent += chunk;
+              
+              
             });
 
             // Now show the popup
@@ -480,21 +572,21 @@ function createPopup() {
         // Show the popup and set the input value to the selected text
         const input = document.querySelector(".popup-input");
         const popup = document.getElementById("input-focus-popup");
-        const gptResult = popup.querySelector(".popup-gpt-result");
+        const gptResult = popup.querySelector("#popup-gpt-result");
         const selectedPrompt =
           "Provide one or two paragraph summary of the following paragraph: " +
           selectedText;
-        gptResult.value = "";
+        gptResult.textContent = "";
         // Call fetchFreeGPTResponse to generate summary
         fetchFreeGPTResponse(selectedPrompt, (chunk) => {
           if (chunk === "Sorry, something went wrong") {
-            gptResult.value += chunk;
+            gptResult.textContent += chunk;
             return;
           }
 
-          gptResult.value += chunk;
-          const contentWidth = gptResult.scrollWidth;
-          popup.style.width = `${contentWidth + 20}px`; // Update the width of the popup
+          gptResult.textContent += chunk;
+          
+          
         });
 
         // Now show the popup
@@ -512,8 +604,8 @@ function createPopup() {
       // Show the popup and set the input value to the selected text
       const input = document.querySelector(".popup-input");
       const popup = document.getElementById("input-focus-popup");
-      const gptResult = popup.querySelector(".popup-gpt-result");
-      gptResult.value = "";
+      const gptResult = popup.querySelector("#popup-gpt-result");
+      gptResult.textContent = "";
       // Now show the popup
       ttsReady = true;
       showPopup(popup, null, input, { x: mousePosition.x, y: mousePosition.y });
@@ -533,8 +625,8 @@ function createPopup() {
         // Show the popup and set the input value to the selected text
         const input = document.querySelector(".popup-input");
         const popup = document.getElementById("input-focus-popup");
-        const gptResult = popup.querySelector(".popup-gpt-result");
-        gptResult.value = "";
+        const gptResult = popup.querySelector("#popup-gpt-result");
+        gptResult.textContent = "";
         const selectedPrompt =
           "Complete explain the following paragraph in  sentences : '" +
           selectedText +
@@ -543,16 +635,14 @@ function createPopup() {
         // Call fetchFreeGPTResponse to generate summary
         fetchFreeGPTResponse(selectedPrompt, (chunk) => {
           if (chunk === "Sorry, something went wrong") {
-            gptResult.value += chunk;
+            gptResult.textContent += chunk;
             return;
           }
 
-          gptResult.value += chunk;
-          const contentWidth = gptResult.scrollWidth;
-          popup.style.width = `${contentWidth + 20}px`; // Update the width of the popup
+          gptResult.textContent += chunk;
+          
+          
         });
-
-        // Now show the popup
         ttsReady = true;
         showPopup(popup, null, input, { x: mousePosition.x, y: mousePosition.y });
       }
@@ -574,7 +664,7 @@ function createPopup() {
       let title = "";
       const input = document.querySelector(".popup-input");
       const popup = document.getElementById("input-focus-popup");
-      const gptResult = document.querySelector(".popup-gpt-result");
+      const gptResult = document.querySelector("#popup-gpt-result");
   
       try {
         let response = await fetch(
@@ -600,7 +690,7 @@ function createPopup() {
         console.log("error getting title");
       }
   
-      const prompt = `Summarize the Youtube video based on the title of the video : ${title}, the youtube channel called : ${author} , and the transcript ${transcriptText}. make the summary not too long and not too short.`;
+      const prompt = `Summarize the Youtube video based on the title of the video : ${title}, the youtube channel called : ${author} , and the transcript ${transcriptText}. make the summary of it.`;
   
       // Keep checking for the sidebar until it exists
   
@@ -611,16 +701,16 @@ function createPopup() {
         );
   
         if (sidebar) {
-          if (title || author || transcriptText) {
+          if (title || author && transcriptText) {
             fetchFreeGPTResponse(prompt, (chunk) => {
               if (chunk === "Sorry, something went wrong") {
-                gptResult.value += chunk;
+                gptResult.textContent += chunk;
                 return;
               }
   
-              gptResult.value += chunk;
-              const contentWidth = gptResult.scrollWidth;
-              popup.style.width = `${contentWidth + 20}px`;
+              gptResult.textContent += chunk;
+              
+              
             });
             console.log("fetching completed");
   
@@ -686,7 +776,7 @@ function showPopup(popup, target, inputTarget, mousePos) {
 async function hidePopup(popup, input, gptResult) {
   popup.style.display = "none";
   input.value = "";
-  gptResult.value = "";
+  gptResult.textContent = "";
   await chrome.storage.session.set({ popupShown: false }).then(() => {
     console.log("popupShown set to false");
   });
@@ -710,7 +800,7 @@ document.addEventListener("click", (event) => {
   const popup = document.getElementById("input-focus-popup");
   const popupWrapper = document.querySelector(".popup-wrapper");
   const input = document.querySelector(".popup-input");
-  const gptResult = document.querySelector(".popup-gpt-result");
+  const gptResult = document.querySelector("#popup-gpt-result");
 
   // Check if the clicked element is outside the popup
   if (!popupWrapper.contains(event.target)) {
@@ -746,11 +836,11 @@ document.addEventListener("input", (event) => {
 
       if (config.mode === "TYPE") {
         // Hide the 'popup-gpt-result' element
-        const popupGptResult = document.querySelector(".popup-gpt-result");
+        const popupGptResult = document.querySelector("#popup-gpt-result");
         popupGptResult.style.display = "none";
         console.log("hide popup-gpt-result");
       } else {
-        const popupGptResult = document.querySelector(".popup-gpt-result");
+        const popupGptResult = document.querySelector("#popup-gpt-result");
         popupGptResult.style.display = "block";
         console.log("hide popup-gpt-result");
       }

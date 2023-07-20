@@ -1,5 +1,5 @@
 .popup-content {
-  background-color: white;
+  background-color: transparent;
   padding: 10px;
   box-sizing: border-box;
   color: rgb(0, 0, 0);
@@ -17,7 +17,7 @@
 }
 
 
-.popup-gpt-result {
+#popup-gpt-result {
   white-space: pre-wrap;
   overflow-wrap: break-word;
   background-color: white;
@@ -111,19 +111,22 @@ input.form-control:focus {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 .popup-input {
-  resize: none;
+  resize: both;
   min-height: 30px;
   max-height: 100px;
-  overflow-y: auto;
+  resize: both;
   margin-bottom: 10px;
   color: black;
 }
-.popup-gpt-result {
+
+#popup-gpt-result {
+  border-top: 3px dotted #bbb;
   resize: none;
   min-height: 100px;
   max-height: 1000px;
   overflow-y: auto;
   color: black;
+  line-height: 1.5;
 }
 
 .popup-input-wrapper {
@@ -154,6 +157,35 @@ input.form-control:focus {
   position: relative;
 }
 
+.suggestion-button {
+  background-color: transparent;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  margin-top: 5px;
+}
+
+.suggestion-button:hover {
+  color: #333;
+}
+
+.popup-suggestion-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+  margin-top: 5px;
+  border-top: 3px dotted #bbb;
+}
+
+
+
+
 .yt-button {
   color:var(--yt-spec-text-primary);
   background-color: var(--yt-spec-badge-chip-background);
@@ -169,6 +201,11 @@ input.form-control:focus {
   box-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
+.hidden {
+  display: none;
+}
+
 .yt-button:hover {
   background-color: var(--yt-spec-mono-tonal-hover);
 }
+
