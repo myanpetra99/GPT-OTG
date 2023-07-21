@@ -626,6 +626,7 @@ function createPopup() {
       gptResult.textContent = "";
       // Now show the popup
       ttsReady = true;
+      input.id = "ASK";
       showPopup(popup, null, input, { x: mousePosition.x, y: mousePosition.y });
     }
 
