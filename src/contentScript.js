@@ -2,6 +2,7 @@
 let ttsReady = false;
 
 async function fetchFreeGPTResponse(prompt, onChunkReceived) {
+
   document.querySelector(".popup-suggestion-wrapper").innerHTML = "";
   ttsReady = false;
   let url = "";
@@ -42,6 +43,18 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
 
   //check if initial prompt is empty, if not use the "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked.",
   //if empty use the initial prompt from the user
+
+  let internetMode = localStorage.getItem("gptinternet");
+
+  let interneturl = `https://gpt-otg-websearch-api.vercel.app/search?query=${prompt}`
+  if (internetMode === "true" ) {
+    const internetPrompt =  await fetch(interneturl, {
+      credentials: "omit",
+      mode: "cors",
+    });
+
+    prompt = await internetPrompt.text();
+  }
 
   const messages = [
     { role: "user", content: prompt },
@@ -306,7 +319,18 @@ function createPopup() {
     }
   };
 
+  const internetButton = document.createElement("button");
+  internetButton.innerHTML =  "WWW" // Add gear icon as HTML entity
+  internetButton.classList.add("popup-internet-button");
+  internetButton.id = "internet-button";
+
+  internetButton.onclick = () => {
+    ToggleInternetButton();
+  };
+
+  popup.appendChild(internetButton);
   popup.appendChild(gearButton);
+  
 
   const inputWrapper = document.createElement("div");
   inputWrapper.style.display = "flex";
@@ -668,6 +692,23 @@ function createPopup() {
     }
   });
 
+  function ToggleInternetButton() {
+    
+      let internetMode = localStorage.getItem("gptinternet");
+
+      if (internetMode === "false" || internetMode === null) {
+        localStorage.setItem("gptinternet", "true")
+        internetButton.classList.add("enabled"); 
+      }
+
+      if (internetMode === "true") {
+        localStorage.setItem("gptinternet", "false")
+        internetButton.classList.remove("enabled");
+      }
+  }
+
+ 
+
   async function AutoProcessVideo() {
   
     hidePopup(popup, input, gptResult);
@@ -798,6 +839,16 @@ function showPopup(popup, target, inputTarget, mousePos) {
   }
   if ( inputTarget.classList !== null && inputTarget.classList !== undefined ) {
   popup.setAttribute("data-target-class", inputTarget.classList[0]);
+  }
+
+  let internetMode = localStorage.getItem("gptinternet");
+
+  const internetButton = document.querySelector("#internet-button");
+
+  if (internetMode === "true") {
+    internetButton.classList.add("enabled"); 
+  }else{
+    internetButton.classList.remove("enabled")
   }
 }
 

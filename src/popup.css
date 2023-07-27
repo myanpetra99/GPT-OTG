@@ -39,6 +39,27 @@
   outline: none;
 }
 
+.popup-internet-button {
+  position: absolute;
+  top: 10px;
+  right: 65px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #666;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.enabled {
+  color: #020fc5;
+}
+
+.enabled:hover {
+  color: #010a8e;
+}
+
 .popup-tts-button {
   position: absolute;
   top: 10px;
@@ -75,6 +96,10 @@
 
 .popup-tts-button:hover {
   color: #333;
+}
+
+.popup-internet-button:hover {
+  color: #020fc5
 }
 
 .popup-wrapper {
