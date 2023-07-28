@@ -111,3 +111,19 @@ button:disabled:hover {
 button:hover {
   background-color: #357ae8;
 }
+
+#popup-gpt-result{
+  height: 500px;
+  width: 49%;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-size: 14px; 
+  padding: 2px;
+float:left;
+}
+.result-html{
+  min-height: 500px;
+  width: 49%;
+padding: 2px;
+border: 1px solid #ccc;
+float:right;
+}

@@ -65,7 +65,7 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived) {
       Your role is to provide succinct, relevant responses to user queries. 
       Users may summon you anywhere online by typing '/ai' or '/typeai'. If a user requests you to create content such as posts, captions, emails, or letters, 
       provide only the required text without any leading phrases (e.g., 'Sure, here is...') or concluding remarks. 
-      Your response should be focused solely on fulfilling the user's request. Respond using Markdown.`
+      Your response should be focused solely on fulfilling the user's request.`
     },
   ];
 
