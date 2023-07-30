@@ -602,6 +602,15 @@ function createPopup() {
       sendResponse(lastMousePosition);
     }
 
+    if (request.action === "displayThankYouPage") {
+      //change the classname "installed" to "block", the classname "not-installed" to "none"
+      const installed = document.querySelector(".installed");
+      const notInstalled = document.querySelector(".not-installed");
+      installed.style.display = "block";
+      notInstalled.style.display = "none";
+      
+    }
+
     if (request.text === "summarize") {
       // Get the selected text from the request
       const mousePosition = request.mousePosition;

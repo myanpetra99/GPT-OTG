@@ -17,5 +17,8 @@
     "dev": "node prepareDev.js",
     "update": "git pull && npm run dev",
     "build": "node prepareBuild.js && webpack && rimraf ./dist/popup.js"
+  },
+  "dependencies": {
+    "shelljs": "^0.8.5"
   }
 }

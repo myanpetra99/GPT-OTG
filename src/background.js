@@ -150,6 +150,10 @@ chrome.webNavigation.onCompleted.addListener(function (details) {
     });
   }
 
+// Convert the URL to lower case before comparing, to ensure case-insensitivity
+
+  
+
   const isYouTubeVideo =
     url.hostname.includes("youtube") && url.pathname.includes("watch");
   if (isYouTubeVideo) {
@@ -161,8 +165,24 @@ chrome.webNavigation.onCompleted.addListener(function (details) {
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   const url = new URL(tab.url);
+
+  const isgithubUrl = url == "https://myanpetra99.github.io/GPT-OTG-WEB/#/thankyou";
+  
+console.log("This is the url: " + url);
+//check if the url is the github url
+
+if (isgithubUrl) {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    var activeTab = tabs[0];
+    chrome.tabs.sendMessage(activeTab.id, {
+      action: "displayThankYouPage",
+    });
+  });
+} 
+
   const isYouTubeVideo =
     url.hostname.includes("youtube") && url.pathname.includes("watch");
+    
 
   if (isYouTubeVideo) {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
@@ -171,9 +191,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         action: "createYoutubeSummaryButton",
       });
     });
-  } else {
-    console.log("Not sending message to content script, url is not a YT video"); // <-- Debugging line
-  }
+  } 
 });
 
 chrome.runtime.onMessage.addListener(async function (request) {
