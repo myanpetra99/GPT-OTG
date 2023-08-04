@@ -19,6 +19,7 @@
 <br>
 
 # It's been a busy weeks!, please help by contributing
+### [Available on Chrome Webstore (beta development). Click here!  ](https://chrome.google.com/webstore/detail/gpt-otg-development-build/fmibenbpkickilfocjdghokdnkmolhfi?hl=en&authuser=0)
 
 GPT-OTG  is a simple, easy-to-use tool that helps you perform AI-based tasks right from your browser. You can do things like understanding human language (NLP), checking if a sentence is positive or negative (sentiment analysis), and lots more!
 
@@ -32,11 +33,11 @@ GPT-OTG  is a simple, easy-to-use tool that helps you perform AI-based tasks rig
 
 ## How to install
 To use the extension, do the following:
-
-1. The extension is not yet available on the Chrome Web Store (Pending Review on Chrome Web Store). To install it, you'll need to use Developer Mode on Chrome://extensions.
+(see at top)
+~~1. The extension is not yet available on the Chrome Web Store (Pending Review on Chrome Web Store). To install it, you'll need to use Developer Mode on Chrome://extensions.
 2. Download the extension from the Release section (link coming soon).
 3. In Chrome://extensions, choose "Load unpacked" and select the folder you downloaded.
-4. Once installed, you'll see the extension in your browser's toolbar and you're good to go!
+4. Once installed, you'll see the extension in your browser's toolbar and you're good to go!~~
 
 
 ## How to use
