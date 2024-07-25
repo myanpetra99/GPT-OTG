@@ -1,4 +1,6 @@
 # GPT-On The GO
+# this extension is under maintenance until further notice!
+
 ![download](https://img.shields.io/github/downloads/myanpetra99/gpt-otg/total)
 ![license](https://img.shields.io/github/license/myanpetra99/gpt-otg)
 ![issues](https://img.shields.io/github/issues/myanpetra99/gpt-otg)
@@ -17,6 +19,7 @@
 
 <br>
 <br>
+
 
 # It's been a busy weeks!, please help by contributing
 ### [Available on Chrome Webstore (beta development). Click here!  ](https://chrome.google.com/webstore/detail/gpt-otg-development-build/fmibenbpkickilfocjdghokdnkmolhfi?hl=en&authuser=0)
