@@ -18,6 +18,10 @@ const DEFAULT_SETTINGS = {
   geminiApiKey: "",
   anthropicApiKey: "",
   deepseekApiKey: "",
+  customApiUrl: "",
+  customApiKey: "",
+  customApiModel: "",
+  customApiStreaming: false,
   initialPrompt: `You are ChatGPT, a large language model trained by OpenAI.
 Carefully heed the user's instructions.
 Respond using Markdown and keep answers concise but complete.
