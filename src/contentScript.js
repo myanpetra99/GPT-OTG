@@ -13,6 +13,10 @@ After answering, provide follow-up ideas prefixed with "GPT-SUGGEST:" in JSON fo
   geminiApiKey: "",
   anthropicApiKey: "",
   deepseekApiKey: "",
+  customApiUrl: "",
+  customApiKey: "",
+  customApiModel: "",
+  customApiStreaming: false,
 };
 
 const MODEL_CONFIGS = {
@@ -77,6 +81,14 @@ const MODEL_CONFIGS = {
     supportsStreaming: true,
     capabilities: ["text"],
   },
+  "custom-openai": {
+    id: "custom-openai",
+    name: "Custom OpenAI-Compatible",
+    provider: "custom",
+    model: "custom",
+    supportsStreaming: false,
+    capabilities: ["text"],
+  },
 };
 
 const TUNING_PRESETS = {
@@ -92,6 +104,7 @@ Keep each suggestion concise.`;
 
 let cachedSettings = { ...DEFAULT_SETTINGS };
 let ttsReady = false;
+let activeTypeTarget = null;
 
 chrome.storage.sync.get(DEFAULT_SETTINGS, (items) => {
   cachedSettings = { ...cachedSettings, ...items };
@@ -112,7 +125,23 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 function getModelConfig(modelId) {
-  return MODEL_CONFIGS[modelId] || MODEL_CONFIGS[DEFAULT_SETTINGS.gptModel];
+  const baseConfig =
+    MODEL_CONFIGS[modelId] || MODEL_CONFIGS[DEFAULT_SETTINGS.gptModel];
+  const config = {
+    ...baseConfig,
+    capabilities: [...(baseConfig.capabilities || [])],
+  };
+
+  if (config.id === "custom-openai") {
+    config.endpoint = (cachedSettings.customApiUrl || "").trim();
+    config.model = (cachedSettings.customApiModel || "").trim() || config.model;
+    config.supportsStreaming =
+      typeof cachedSettings.customApiStreaming === "boolean"
+        ? cachedSettings.customApiStreaming
+        : DEFAULT_SETTINGS.customApiStreaming;
+  }
+
+  return config;
 }
 
 function getTuningPreset(tune) {
@@ -129,9 +158,83 @@ function getApiKeyForProvider(provider) {
       return (cachedSettings.anthropicApiKey || "").trim();
     case "deepseek":
       return (cachedSettings.deepseekApiKey || "").trim();
+    case "custom":
+      return (cachedSettings.customApiKey || "").trim();
     default:
       return "";
   }
+}
+
+function isEligibleTypingTarget(element) {
+  if (!element || !element.tagName) {
+    return false;
+  }
+
+  if (element.classList?.contains("popup-input")) {
+    return false;
+  }
+
+  return (
+    (element.tagName === "INPUT" && element.type === "text") ||
+    element.tagName === "TEXTAREA" ||
+    (element.tagName === "DIV" &&
+      element.getAttribute("contenteditable") === "true")
+  );
+}
+
+function resolveTypingTarget(popup) {
+  if (activeTypeTarget && document.contains(activeTypeTarget)) {
+    return activeTypeTarget;
+  }
+
+  if (!popup) {
+    return null;
+  }
+
+  const targetId = popup.getAttribute("data-target-id");
+  if (targetId) {
+    const element = document.getElementById(targetId);
+    if (isEligibleTypingTarget(element)) {
+      return element;
+    }
+  }
+
+  const targetClass = popup.getAttribute("data-target-class");
+  if (targetClass) {
+    const element = document.getElementsByClassName(targetClass)[0];
+    if (isEligibleTypingTarget(element)) {
+      return element;
+    }
+  }
+
+  return null;
+}
+
+function appendChunkToTarget(target, chunk) {
+  if (!target || !chunk) {
+    return;
+  }
+
+  const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
+  const isEditable = target.getAttribute?.("contenteditable") === "true";
+
+  if (isInput) {
+    target.value += chunk;
+  } else if (isEditable) {
+    target.innerHTML += chunk;
+  } else {
+    return;
+  }
+
+  if (typeof target.focus === "function" && document.activeElement !== target) {
+    try {
+      target.focus({ preventScroll: true });
+    } catch (error) {
+      target.focus();
+    }
+  }
+
+  target.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 function parseSuggestionsFromText(rawText) {
@@ -346,16 +449,20 @@ async function callOpenAiCompatible({
   onChunkReceived,
   config,
   apiKey,
+  requireApiKey = true,
 }) {
-  if (!apiKey) {
+  if (requireApiKey && !apiKey) {
     throw new Error("Add your API key for the selected provider in the options page.");
   }
 
   const headers = {
     "Content-Type": "application/json",
     Accept: "*/*",
-    Authorization: `Bearer ${apiKey}`,
   };
+
+  if (apiKey) {
+    headers.Authorization = `Bearer ${apiKey}`;
+  }
 
   const baseMessages = [
     { role: "system", content: systemPrompt },
@@ -371,6 +478,10 @@ async function callOpenAiCompatible({
     frequency_penalty: 0,
     stream: config.supportsStreaming,
   };
+
+  if (!config.endpoint) {
+    throw new Error("No API endpoint configured for this model.");
+  }
 
   const response = await fetch(config.endpoint, {
     method: "POST",
@@ -700,6 +811,24 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived, options = {}) {
         config,
         apiKey,
       });
+    } else if (config.provider === "custom") {
+      if (!config.endpoint) {
+        throw new Error("Custom API URL is missing. Please add it in the options page.");
+      }
+      if (!config.model || config.model === "custom") {
+        throw new Error("Custom model name is missing. Please add it in the options page.");
+      }
+
+      const apiKey = getApiKeyForProvider("custom");
+      result = await callOpenAiCompatible({
+        prompt: preparedPrompt,
+        systemPrompt,
+        tuning,
+        onChunkReceived,
+        config,
+        apiKey,
+        requireApiKey: false,
+      });
     } else if (config.provider === "gemini") {
       result = await callGemini({
         prompt: preparedPrompt,
@@ -936,8 +1065,6 @@ function createPopup() {
         // Check if the user wants to use BingChat or OpenAI's GPT
         // Use OpenAI's GPT
         fetchFreeGPTResponse(userInput, (chunk) => {
-          const targetId = popup.getAttribute("data-target-id");
-          const targetElement = document.getElementById(targetId);
           input.value = "AI is thinking";
           if (chunk === "Sorry, something went wrong") {
             input.value = backupInput;
@@ -948,35 +1075,9 @@ function createPopup() {
           if (input.id === "ASK") {
             gptResult.textContent += chunk;
           } else {
+            const targetElement = resolveTypingTarget(popup);
             if (targetElement) {
-              console.log("Element found");
-              if (
-                (targetElement.tagName === "INPUT" ||
-                  targetElement.tagName === "TEXTAREA") &&
-                targetElement
-              ) {
-                targetElement.value += chunk;
-              } else if (
-                targetElement.getAttribute("contenteditable") === "true"
-              ) {
-                targetElement.innerHTML += chunk;
-              }
-            } else {
-              const targetClass = popup.getAttribute("data-target-class");
-              const targetElements = document.getElementsByClassName(targetClass);
-              if (targetElements.length > 0) {
-                if (
-                  (targetElements[0].tagName === "INPUT" ||
-                    targetElements[0].tagName === "TEXTAREA") &&
-                  targetElements[0]
-                ) {
-                  targetElements[0].value += chunk;
-                } else if (
-                  targetElements[0].getAttribute("contenteditable") === "true"
-                ) {
-                  targetElements[0].innerHTML += chunk;
-                }
-              }
+              appendChunkToTarget(targetElement, chunk);
             }
           }
 
@@ -1409,14 +1510,23 @@ function showPopup(popup, target, inputTarget, mousePos) {
   popup.style.opacity = 1;
   popup.style.display = "block";
 
-  if ( inputTarget.id !== null && inputTarget.id !== undefined && inputTarget.id !== "") {
-  popup.setAttribute("data-target-id", inputTarget.id);
+  if (isEligibleTypingTarget(inputTarget)) {
+    activeTypeTarget = inputTarget;
+    if (inputTarget.id) {
+      popup.setAttribute("data-target-id", inputTarget.id);
+    } else {
+      inputTarget.id = "GPT-OTG-TARGET-ID";
+      popup.setAttribute("data-target-id", inputTarget.id);
+    }
+    if (inputTarget.classList?.length) {
+      popup.setAttribute("data-target-class", inputTarget.classList[0]);
+    } else {
+      popup.removeAttribute("data-target-class");
+    }
   } else {
-  inputTarget.id = "GPT-OTG-TARGET-ID";
-  popup.setAttribute("data-target-id", inputTarget.id);
-  }
-  if ( inputTarget.classList !== null && inputTarget.classList !== undefined ) {
-  popup.setAttribute("data-target-class", inputTarget.classList[0]);
+    activeTypeTarget = null;
+    popup.removeAttribute("data-target-id");
+    popup.removeAttribute("data-target-class");
   }
 
   let internetMode = localStorage.getItem("gptinternet");
@@ -1432,23 +1542,22 @@ function showPopup(popup, target, inputTarget, mousePos) {
 
 async function hidePopup(popup, input, gptResult) {
   popup.style.display = "none";
-  input.value = "";
-  gptResult.textContent = "";
+  if (input) {
+    input.value = "";
+  }
+  if (gptResult) {
+    gptResult.textContent = "";
+  }
+  popup.removeAttribute("data-target-id");
+  popup.removeAttribute("data-target-class");
+  activeTypeTarget = null;
   await chrome.storage.session.set({ popupShown: false }).then(() => {
     console.log("popupShown set to false");
   });
 }
 
 function isTextInput(element) {
-  const isPopupInput = element.classList.contains("popup-input");
-
-  return (
-    !isPopupInput &&
-    ((element.tagName === "INPUT" && element.type === "text") ||
-      element.tagName === "TEXTAREA" ||
-      (element.tagName === "DIV" &&
-        element.getAttribute("contenteditable") === "true"))
-  );
+  return Boolean(element) && isEligibleTypingTarget(element);
 }
 
 const popup = createPopup();

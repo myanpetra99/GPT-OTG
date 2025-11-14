@@ -13,6 +13,10 @@ After answering, provide follow-up ideas prefixed with \"GPT-SUGGEST:\" in JSON 
   geminiApiKey: "",
   anthropicApiKey: "",
   deepseekApiKey: "",
+  customApiUrl: "",
+  customApiKey: "",
+  customApiModel: "",
+  customApiStreaming: false,
 };
 
 const MODEL_METADATA = {
@@ -51,6 +55,11 @@ const MODEL_METADATA = {
     provider: "deepseek",
     hint: "DeepSeek Reasoner focuses on analytical outputs.",
   },
+  "custom-openai": {
+    requiresKey: false,
+    provider: "custom",
+    hint: "Connect to any OpenAI-compatible endpoint (e.g., local Ollama).",
+  },
 };
 
 const PROVIDER_FIELDS = {
@@ -58,6 +67,7 @@ const PROVIDER_FIELDS = {
   gemini: "geminiApiKey",
   anthropic: "anthropicApiKey",
   deepseek: "deepseekApiKey",
+  custom: "customApiKey",
 };
 
 let isDirty = false;
@@ -140,6 +150,14 @@ function loadSettings() {
     $("#geminiApiKey").value = items.geminiApiKey ?? "";
     $("#anthropicApiKey").value = items.anthropicApiKey ?? "";
     $("#deepseekApiKey").value = items.deepseekApiKey ?? "";
+    $("#customApiUrl").value = items.customApiUrl ?? "";
+    $("#customApiModel").value = items.customApiModel ?? "";
+    $("#customApiKey").value = items.customApiKey ?? "";
+    $("#customApiStreaming").checked = Boolean(
+      typeof items.customApiStreaming === "boolean"
+        ? items.customApiStreaming
+        : DEFAULT_SETTINGS.customApiStreaming
+    );
 
     updateModelUi(items.gptModel);
     clearDirtyState();
@@ -159,6 +177,10 @@ function saveSettings() {
     geminiApiKey: $("#geminiApiKey").value.trim(),
     anthropicApiKey: $("#anthropicApiKey").value.trim(),
     deepseekApiKey: $("#deepseekApiKey").value.trim(),
+    customApiUrl: $("#customApiUrl").value.trim(),
+    customApiModel: $("#customApiModel").value.trim(),
+    customApiKey: $("#customApiKey").value.trim(),
+    customApiStreaming: $("#customApiStreaming").checked,
   };
 
   const metadata = MODEL_METADATA[payload.gptModel];
@@ -170,6 +192,19 @@ function saveSettings() {
         : "Selected";
       setStatus(`${friendlyName} API key is required for this model.`, "error");
       $("#" + providerKey)?.focus();
+      return;
+    }
+  }
+
+  if (payload.gptModel === "custom-openai") {
+    if (!payload.customApiUrl) {
+      setStatus("Custom API URL is required.", "error");
+      $("#customApiUrl").focus();
+      return;
+    }
+    if (!payload.customApiModel) {
+      setStatus("Enter the model identifier the endpoint expects.", "error");
+      $("#customApiModel").focus();
       return;
     }
   }

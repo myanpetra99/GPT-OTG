@@ -38,6 +38,9 @@
                 <option value="deepseek-chat">DeepSeek Chat</option>
                 <option value="deepseek-reasoner">DeepSeek Reasoner</option>
               </optgroup>
+              <optgroup label="Custom">
+                <option value="custom-openai">Custom (OpenAI-compatible)</option>
+              </optgroup>
             </select>
             <p class="field__hint" id="modelHint"></p>
           </div>
@@ -90,6 +93,42 @@
                 autocomplete="off"
               />
               <p class="field__hint">Used for DeepSeek Chat/Reasoner.</p>
+            </div>
+            <div class="field hidden" data-provider-key="custom">
+              <label class="field__label" for="customApiUrl">Custom API URL</label>
+              <input
+                class="field__input"
+                type="url"
+                id="customApiUrl"
+                name="customApiUrl"
+                placeholder="http://localhost:11434/v1/chat/completions"
+                autocomplete="off"
+              />
+              <p class="field__hint">
+                Works with any OpenAI-compatible endpoint such as a local Ollama server.
+              </p>
+              <label class="field__label" for="customApiModel">Model identifier</label>
+              <input
+                class="field__input"
+                type="text"
+                id="customApiModel"
+                name="customApiModel"
+                placeholder="llama3.1"
+                autocomplete="off"
+              />
+              <label class="field__label" for="customApiKey">API key (optional)</label>
+              <input
+                class="field__input"
+                type="password"
+                id="customApiKey"
+                name="customApiKey"
+                placeholder="Bearer token"
+                autocomplete="off"
+              />
+              <label class="toggle toggle--field" for="customApiStreaming">
+                <input class="toggle__input" type="checkbox" id="customApiStreaming" name="customApiStreaming" />
+                <span class="toggle__label">Endpoint streams responses over SSE</span>
+              </label>
             </div>
           </div>
         </section>
