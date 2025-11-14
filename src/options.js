@@ -1,96 +1,193 @@
-document.addEventListener("DOMContentLoaded", function () {
-    // Load any previously saved settings when the options page opens
-    loadSettings();
-    
-    // Attach event listener to the Save button
-    document.getElementById('save').addEventListener('click', function() {
-        // Save settings when the Save button is clicked
-        saveSettings();
-    });
-  
-    // Attach event listener to the Reset button
-    document.getElementById('reset').addEventListener('click', function() {
-        // Reset settings when the Reset button is clicked
-        resetSettings();
-    });
-
-    // Attach event listeners for changes to input fields
-    document.getElementById('tune').addEventListener('change', enableSaveReset);
-    document.getElementById('model').addEventListener('change', enableSaveReset);
-    document.getElementById('aiCommand').addEventListener('change', enableSaveReset);
-    document.getElementById('googleSearch').addEventListener('change', enableSaveReset);
-    document.getElementById('initialPrompt').addEventListener('input', enableSaveReset);
-    document.getElementById('youtubeSummary').addEventListener('change', enableSaveReset);
-});
-  
-// Default settings
 const DEFAULT_SETTINGS = {
-    tune:'balance',
-    gptModel: "gpt-3.5-turbo",
-    youtubeSummary: true,
-    aiCommand: true,
-    googleSearch: true,
-    initialPrompt: "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked."
+  tune: "balance",
+  gptModel: "openai-gpt-4o-mini",
+  youtubeSummary: true,
+  aiCommand: true,
+  googleSearch: true,
+  initialPrompt: `You are ChatGPT, a large language model trained by OpenAI.
+Carefully heed the user's instructions.
+Respond using Markdown and keep answers concise but complete.
+When creating content for the user, answer directly without filler phrases.
+After answering, provide follow-up ideas prefixed with \"GPT-SUGGEST:\" in JSON format.`,
+  openaiApiKey: "",
+  geminiApiKey: "",
+  anthropicApiKey: "",
+  deepseekApiKey: "",
 };
 
-// Function to load settings
+const MODEL_METADATA = {
+  "openai-gpt-4o-mini": {
+    requiresKey: true,
+    provider: "openai",
+    hint: "Fastest OpenAI GPT-4o tier with multimodal support.",
+  },
+  "openai-gpt-4o": {
+    requiresKey: true,
+    provider: "openai",
+    hint: "Best quality OpenAI GPT-4o responses.",
+  },
+  "gemini-1.5-flash": {
+    requiresKey: true,
+    provider: "gemini",
+    hint: "Gemini 1.5 Flash supports text + images.",
+  },
+  "gemini-2.0-flash": {
+    requiresKey: true,
+    provider: "gemini",
+    hint: "Latest Gemini 2.0 Flash experimental model.",
+  },
+  "anthropic-claude-3-5-sonnet": {
+    requiresKey: true,
+    provider: "anthropic",
+    hint: "Claude 3.5 Sonnet excels at reasoning and structure.",
+  },
+  "deepseek-chat": {
+    requiresKey: true,
+    provider: "deepseek",
+    hint: "DeepSeek Chat is great for rapid drafts.",
+  },
+  "deepseek-reasoner": {
+    requiresKey: true,
+    provider: "deepseek",
+    hint: "DeepSeek Reasoner focuses on analytical outputs.",
+  },
+};
+
+const PROVIDER_FIELDS = {
+  openai: "openaiApiKey",
+  gemini: "geminiApiKey",
+  anthropic: "anthropicApiKey",
+  deepseek: "deepseekApiKey",
+};
+
+let isDirty = false;
+
+function $(selector) {
+  return document.querySelector(selector);
+}
+
+function setDirty() {
+  if (!isDirty) {
+    isDirty = true;
+    $("#save").disabled = false;
+    $("#reset").disabled = false;
+  }
+}
+
+function clearDirtyState() {
+  isDirty = false;
+  $("#save").disabled = true;
+  $("#reset").disabled = true;
+}
+
+function setStatus(message, type = "info") {
+  const status = $("#statusMessage");
+  status.textContent = message;
+  status.dataset.type = type;
+}
+
+function updateModelUi(modelId) {
+  const metadata = MODEL_METADATA[modelId] || MODEL_METADATA[DEFAULT_SETTINGS.gptModel];
+  const hint = metadata?.hint ?? "";
+  const provider = metadata?.provider;
+
+  const modelHint = $("#modelHint");
+  modelHint.textContent = hint;
+
+  document
+    .querySelectorAll('[data-provider-key]')
+    .forEach((field) => field.classList.add("hidden"));
+
+  Object.values(PROVIDER_FIELDS).forEach((inputId) => {
+    $("#" + inputId).removeAttribute("required");
+  });
+
+  if (provider && PROVIDER_FIELDS[provider]) {
+    const field = document.querySelector(`[data-provider-key="${provider}"]`);
+    if (field) {
+      field.classList.remove("hidden");
+    }
+    const input = $("#" + PROVIDER_FIELDS[provider]);
+    if (metadata?.requiresKey && input) {
+      input.setAttribute("required", "required");
+    }
+  }
+}
+
+function bindFormEvents() {
+  const form = $("#settingsForm");
+  form.addEventListener("input", setDirty);
+  form.addEventListener("change", (event) => {
+    if (event.target.id === "model") {
+      updateModelUi(event.target.value);
+    }
+    setDirty();
+  });
+
+  $("#save").addEventListener("click", saveSettings);
+  $("#reset").addEventListener("click", resetSettings);
+}
+
 function loadSettings() {
-    
-    chrome.storage.sync.get(DEFAULT_SETTINGS, function(items) {
-        document.getElementById('tune').value = items.tune;
-        document.getElementById('model').value = items.gptModel;
-        document.getElementById('aiCommand').checked = items.aiCommand;
-        document.getElementById('googleSearch').checked = items.googleSearch;
-        document.getElementById('youtubeSummary').checked = items.youtubeSummary;
-        document.getElementById('initialPrompt').value = items.initialPrompt;
+  chrome.storage.sync.get(DEFAULT_SETTINGS, (items) => {
+    $("#model").value = items.gptModel;
+    $("#tune").value = items.tune;
+    $("#aiCommand").checked = Boolean(items.aiCommand);
+    $("#googleSearch").checked = Boolean(items.googleSearch);
+    $("#youtubeSummary").checked = Boolean(items.youtubeSummary);
+    $("#initialPrompt").value = items.initialPrompt;
+    $("#openaiApiKey").value = items.openaiApiKey ?? "";
+    $("#geminiApiKey").value = items.geminiApiKey ?? "";
+    $("#anthropicApiKey").value = items.anthropicApiKey ?? "";
+    $("#deepseekApiKey").value = items.deepseekApiKey ?? "";
 
-        // disable buttons at start
-        document.getElementById('save').disabled = true;
-        document.getElementById('reset').disabled = true;
-    });
+    updateModelUi(items.gptModel);
+    clearDirtyState();
+    setStatus("Settings loaded");
+  });
 }
 
-// Function to save settings
 function saveSettings() {
-    let tune = document.getElementById('tune').value;
-    let gptModel = document.getElementById('model').value;
-    let aiCommand = document.getElementById('aiCommand').checked;
-    let googleSearch = document.getElementById('googleSearch').checked;
-    let initialPrompt = document.getElementById('initialPrompt').value;
-    let youtubeSummary = document.getElementById('youtubeSummary').checked;
-    
-    chrome.storage.sync.set({
-        tune: tune,
-        gptModel: gptModel,
-        aiCommand: aiCommand,
-        googleSearch: googleSearch,
-        initialPrompt: initialPrompt,
-        youtubeSummary: youtubeSummary
-    }, function() {
-        // Notify that we saved.
-        alert('Settings saved');
+  const payload = {
+    gptModel: $("#model").value,
+    tune: $("#tune").value,
+    aiCommand: $("#aiCommand").checked,
+    googleSearch: $("#googleSearch").checked,
+    youtubeSummary: $("#youtubeSummary").checked,
+    initialPrompt: $("#initialPrompt").value.trim(),
+    openaiApiKey: $("#openaiApiKey").value.trim(),
+    geminiApiKey: $("#geminiApiKey").value.trim(),
+    anthropicApiKey: $("#anthropicApiKey").value.trim(),
+    deepseekApiKey: $("#deepseekApiKey").value.trim(),
+  };
 
-        // disable save and reset buttons after successful save
-        document.getElementById('save').disabled = true;
-    });
+  const metadata = MODEL_METADATA[payload.gptModel];
+  if (metadata?.requiresKey) {
+    const providerKey = metadata.provider && PROVIDER_FIELDS[metadata.provider];
+    if (providerKey && !payload[providerKey]) {
+      const friendlyName = metadata.provider
+        ? metadata.provider.charAt(0).toUpperCase() + metadata.provider.slice(1)
+        : "Selected";
+      setStatus(`${friendlyName} API key is required for this model.`, "error");
+      $("#" + providerKey)?.focus();
+      return;
+    }
+  }
+
+  chrome.storage.sync.set(payload, () => {
+    setStatus("Settings saved successfully.", "success");
+    clearDirtyState();
+  });
 }
 
-// Function to reset settings
 function resetSettings() {
-    // Reset to default settings
-    document.getElementById('tune').value = DEFAULT_SETTINGS.tune;
-    document.getElementById('model').value = DEFAULT_SETTINGS.gptModel;
-    document.getElementById('aiCommand').checked = DEFAULT_SETTINGS.aiCommand;
-    document.getElementById('googleSearch').checked = DEFAULT_SETTINGS.googleSearch;
-    document.getElementById('initialPrompt').value = DEFAULT_SETTINGS.initialPrompt;
-    document.getElementById('youtubeSummary').value = DEFAULT_SETTINGS.youtubeSummary;
-    // Save the default settings
-    saveSettings();
-    document.getElementById('reset').disabled = true;
+  chrome.storage.sync.set(DEFAULT_SETTINGS, () => {
+    loadSettings();
+    setStatus("Settings restored to defaults.", "success");
+  });
 }
 
-// Function to enable Save and Reset buttons when changes are made
-function enableSaveReset() {
-    document.getElementById('save').disabled = false;
-    document.getElementById('reset').disabled = false;
-}
+document.addEventListener("DOMContentLoaded", () => {
+  bindFormEvents();
+  loadSettings();
+});

@@ -1,8 +1,9 @@
 // This is the background script for the extension.
 
-chrome.action.onClicked.addListener(function (activeTab) {
+chrome.action.onClicked.addListener(() => {
   chrome.runtime.openOptionsPage();
 });
+
 function openOptionsPage() {
   chrome.runtime.openOptionsPage();
 }
@@ -12,105 +13,103 @@ const DEFAULT_SETTINGS = {
   youtubeSummary: true,
   aiCommand: true,
   googleSearch: true,
-  initialPrompt:`You are ChatGPT, a large language model trained by OpenAI. 
-  Your role is to provide succinct, relevant responses to user queries. 
-  At the end of each interaction, you must provide one or more suggestions for future questions the user might ask. 
-  These suggestions should follow this specific format: [{suggestion: '1', text: 'Your question here'}, {suggestion: '2', text: 'Your second question here'}]. 
-  For instance, if a user asks 'Who is Spiderman?', you should end your response EXACTLY LIKE THIS: "GPT-SUGGEST: [{suggestion: '1', text: 'How strong is Spiderman?'}, {suggestion: '2', text: 'Who are some of Spiderman's most formidable enemies?'}]". 
-  No leading or trailing phrases should be used around these suggestions; they should follow immediately after the answer to the initial query.
-  Users may summon you anywhere online by typing '/ai' or '/typeai'. If a user requests you to create content such as posts, captions, emails, or letters, 
-  provide only the required text without any leading phrases (e.g., 'Sure, here is...') or concluding remarks. 
-  Your response should be focused solely on fulfilling the user's request. Respond using Markdown.`
+  gptModel: "openai-gpt-4o-mini",
+  openaiApiKey: "",
+  geminiApiKey: "",
+  anthropicApiKey: "",
+  deepseekApiKey: "",
+  initialPrompt: `You are ChatGPT, a large language model trained by OpenAI.
+Carefully heed the user's instructions.
+Respond using Markdown and keep answers concise but complete.
+When creating content for the user, answer directly without filler phrases.
+After answering, provide follow-up ideas prefixed with "GPT-SUGGEST:" in JSON format.`,
 };
 
-chrome.runtime.onInstalled.addListener(function () {
-  // Initialize the settings.
-  chrome.storage.sync.set(DEFAULT_SETTINGS);
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === "install") {
+    chrome.storage.sync.set(DEFAULT_SETTINGS);
+  } else if (reason === "update") {
+    chrome.storage.sync.get(DEFAULT_SETTINGS, (existing) => {
+      const missingEntries = {};
+      Object.keys(DEFAULT_SETTINGS).forEach((key) => {
+        if (typeof existing[key] === "undefined") {
+          missingEntries[key] = DEFAULT_SETTINGS[key];
+        }
+      });
+      if (Object.keys(missingEntries).length) {
+        chrome.storage.sync.set(missingEntries);
+      }
+    });
+  }
 
-  chrome.contextMenus.create({
-    id: "summarize",
-    title: "Summarize AI",
-    contexts: ["selection"],
-  });
-
-  chrome.contextMenus.create({
-    id: "summarize",
-    title: "Summarize AI",
-    contexts: ["selection"],
-  });
-
-  chrome.contextMenus.create({
-    id: "chat",
-    title: "Chat AI",
-  });
-
-  chrome.contextMenus.create({
-    id: "explain",
-    title: "What is this?",
-    contexts: ["selection"],
-  });
+  createContextMenus();
 
   const url = "https://myanpetra99.github.io/GPT-OTG-WEB/#/thankyou";
   chrome.tabs.create({
-    url: url,
+    url,
   });
 });
 
-chrome.contextMenus.onClicked.addListener(function (info, tab) {
-  if (info.menuItemId === "summarize") {
-    chrome.tabs.sendMessage(
-      tab.id,
-      { text: "getMousePosition" },
-      function (response) {
-        const { x, y } = response;
+function createContextMenus() {
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: "summarize",
+      title: "Summarize with AI",
+      contexts: ["selection"],
+    });
 
-        // Then send the position to the tab
-        console.log("This is the mouse position: " + x + " " + y);
+    chrome.contextMenus.create({
+      id: "chat",
+      title: "Chat with AI",
+      contexts: ["page", "selection"],
+    });
 
-        chrome.tabs.sendMessage(tab.id, {
-          text: "summarize",
-          selectionText: info.selectionText,
-          mousePosition: { x: x, y: y },
-        });
-      }
-    );
+    chrome.contextMenus.create({
+      id: "explain",
+      title: "What is this?",
+      contexts: ["selection"],
+    });
+
+    chrome.contextMenus.create({
+      id: "analyzeImage",
+      title: "Ask AI about this image",
+      contexts: ["image"],
+    });
+  });
+}
+
+chrome.runtime.onStartup.addListener(createContextMenus);
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (!tab?.id) {
+    return;
   }
 
-  if (info.menuItemId === "chat") {
-    // Request the mouse position from the content script
-    chrome.tabs.sendMessage(
-      tab.id,
-      { text: "getMousePosition" },
-      function (response) {
-        const { x, y } = response;
+  const forwardWithPosition = (payload) => {
+    chrome.tabs.sendMessage(tab.id, { text: "getMousePosition" }, (response) => {
+      const { x = 0, y = 0 } = response || {};
+      chrome.tabs.sendMessage(tab.id, {
+        ...payload,
+        mousePosition: { x, y },
+      });
+    });
+  };
 
-        // Then send the position to the tab
-        console.log("This is the mouse position: " + x + " " + y);
-        chrome.tabs.sendMessage(tab.id, {
-          text: "chat",
-          mousePosition: { x: x, y: y },
-        });
-      }
-    );
-  }
-
-  if (info.menuItemId === "explain") {
-    chrome.tabs.sendMessage(
-      tab.id,
-      { text: "getMousePosition" },
-      function (response) {
-        const { x, y } = response;
-
-        // Then send the position to the tab
-        console.log("This is the mouse position: " + x + " " + y);
-
-        chrome.tabs.sendMessage(tab.id, {
-          text: "explain",
-          selectionText: info.selectionText,
-          mousePosition: { x: x, y: y },
-        });
-      }
-    );
+  switch (info.menuItemId) {
+    case "summarize":
+      forwardWithPosition({ text: "summarize", selectionText: info.selectionText });
+      break;
+    case "chat":
+      forwardWithPosition({ text: "chat" });
+      break;
+    case "explain":
+      forwardWithPosition({ text: "explain", selectionText: info.selectionText });
+      break;
+    case "analyzeImage":
+      forwardWithPosition({ text: "analyzeImage", imageUrl: info.srcUrl });
+      break;
+    default:
+      break;
   }
 });
 

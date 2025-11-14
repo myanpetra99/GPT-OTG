@@ -1,218 +1,745 @@
-//ofc fetch the GPT Response!
+const DEFAULT_SETTINGS = {
+  tune: "balance",
+  gptModel: "openai-gpt-4o-mini",
+  youtubeSummary: true,
+  aiCommand: true,
+  googleSearch: true,
+  initialPrompt: `You are ChatGPT, a large language model trained by OpenAI.
+Carefully heed the user's instructions.
+Respond using Markdown and keep answers concise but complete.
+When creating content for the user, answer directly without filler phrases.
+After answering, provide follow-up ideas prefixed with "GPT-SUGGEST:" in JSON format.`,
+  openaiApiKey: "",
+  geminiApiKey: "",
+  anthropicApiKey: "",
+  deepseekApiKey: "",
+};
+
+const MODEL_CONFIGS = {
+  "openai-gpt-4o-mini": {
+    id: "openai-gpt-4o-mini",
+    name: "OpenAI GPT-4o mini",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    endpoint: "https://api.openai.com/v1/chat/completions",
+    supportsStreaming: true,
+    capabilities: ["text"],
+  },
+  "openai-gpt-4o": {
+    id: "openai-gpt-4o",
+    name: "OpenAI GPT-4o",
+    provider: "openai",
+    model: "gpt-4o",
+    endpoint: "https://api.openai.com/v1/chat/completions",
+    supportsStreaming: true,
+    capabilities: ["text"],
+  },
+  "gemini-1.5-flash": {
+    id: "gemini-1.5-flash",
+    name: "Gemini 1.5 Flash",
+    provider: "gemini",
+    model: "gemini-1.5-flash",
+    supportsStreaming: false,
+    capabilities: ["text", "vision"],
+  },
+  "gemini-2.0-flash": {
+    id: "gemini-2.0-flash",
+    name: "Gemini 2.0 Flash",
+    provider: "gemini",
+    model: "gemini-2.0-flash-exp",
+    supportsStreaming: false,
+    capabilities: ["text"],
+  },
+  "anthropic-claude-3-5-sonnet": {
+    id: "anthropic-claude-3-5-sonnet",
+    name: "Claude 3.5 Sonnet",
+    provider: "anthropic",
+    model: "claude-3-5-sonnet-20240620",
+    endpoint: "https://api.anthropic.com/v1/messages",
+    supportsStreaming: false,
+    capabilities: ["text"],
+  },
+  "deepseek-chat": {
+    id: "deepseek-chat",
+    name: "DeepSeek Chat",
+    provider: "deepseek",
+    model: "deepseek-chat",
+    endpoint: "https://api.deepseek.com/chat/completions",
+    supportsStreaming: true,
+    capabilities: ["text"],
+  },
+  "deepseek-reasoner": {
+    id: "deepseek-reasoner",
+    name: "DeepSeek Reasoner",
+    provider: "deepseek",
+    model: "deepseek-reasoner",
+    endpoint: "https://api.deepseek.com/chat/completions",
+    supportsStreaming: true,
+    capabilities: ["text"],
+  },
+};
+
+const TUNING_PRESETS = {
+  creative: { temperature: 0.9, topP: 0.9 },
+  balance: { temperature: 0.7, topP: 0.8 },
+  precise: { temperature: 0.4, topP: 0.65 },
+};
+
+const FOLLOW_UP_INSTRUCTION = `Provide one or more follow-up questions the user might ask next.
+Format the suggestions exactly as a JSON array like this:
+[{"suggestion":"1","text":"Question text"}].
+Keep each suggestion concise.`;
+
+let cachedSettings = { ...DEFAULT_SETTINGS };
 let ttsReady = false;
 
-async function fetchFreeGPTResponse(prompt, onChunkReceived) {
+chrome.storage.sync.get(DEFAULT_SETTINGS, (items) => {
+  cachedSettings = { ...cachedSettings, ...items };
+});
 
-  document.querySelector(".popup-suggestion-wrapper").innerHTML = "";
-  ttsReady = false;
-  let url = "";
-  let Authorization = "";
-  let model = "";
-  model = "gpt-3.5-turbo"
-  /*wait chrome.storage.sync.get("gptModel", function (items) {
-    if (items.gptModel) {
-      model = items.gptModel;
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "sync") {
+    return;
+  }
+
+  Object.entries(changes).forEach(([key, { newValue }]) => {
+    if (typeof newValue === "undefined") {
+      cachedSettings[key] = DEFAULT_SETTINGS[key];
     } else {
-      model = "gpt-3.5-turbo";
+      cachedSettings[key] = newValue;
     }
-  });*/
-  console.log("Currently using model : " + model);
-  model == "gpt-3.5-turbo"
-    ? (Authorization = "Bearer MyDiscord")
-    : (Authorization = "Bearer MyDiscord");
-  model == "gpt-3.5-turbo"
-    ? (url = "https://free.churchless.tech/v1/chat/completions")
-    : (url = "https://free.churchless.tech/v1/chat/completions");
+  });
+});
+
+function getModelConfig(modelId) {
+  return MODEL_CONFIGS[modelId] || MODEL_CONFIGS[DEFAULT_SETTINGS.gptModel];
+}
+
+function getTuningPreset(tune) {
+  return TUNING_PRESETS[tune] || TUNING_PRESETS.balance;
+}
+
+function getApiKeyForProvider(provider) {
+  switch (provider) {
+    case "openai":
+      return (cachedSettings.openaiApiKey || "").trim();
+    case "gemini":
+      return (cachedSettings.geminiApiKey || "").trim();
+    case "anthropic":
+      return (cachedSettings.anthropicApiKey || "").trim();
+    case "deepseek":
+      return (cachedSettings.deepseekApiKey || "").trim();
+    default:
+      return "";
+  }
+}
+
+function parseSuggestionsFromText(rawText) {
+  if (!rawText) {
+    return [];
+  }
+
+  const withoutPrefix = rawText.replace(/^GPT-SUGGEST:\s*/i, "").trim();
+  const unwrapped = withoutPrefix
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
+    .trim();
+
+  const jsonMatch = unwrapped.match(/\{.*\}|\[.*\]/s);
+  const candidate = jsonMatch ? jsonMatch[0] : unwrapped;
+
+  try {
+    const parsed = JSON.parse(candidate);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((item) => {
+          if (typeof item === "string") {
+            return { suggestion: item, text: item };
+          }
+          return {
+            suggestion: item.suggestion || item.id || item.text || "",
+            text: item.text || item.suggestion || "",
+          };
+        })
+        .filter((item) => item.text);
+    }
+
+    if (parsed && typeof parsed === "object") {
+      const fromKey = parsed["GPT-SUGGEST"] || parsed.suggestions || parsed.items;
+      if (Array.isArray(fromKey)) {
+        return fromKey
+          .map((text) => {
+            if (typeof text === "string") {
+              return { suggestion: text, text };
+            }
+            return {
+              suggestion: text?.suggestion || text?.text || "",
+              text: text?.text || text?.suggestion || "",
+            };
+          })
+          .filter((item) => item.text);
+      }
+    }
+  } catch (error) {
+    console.warn("Unable to parse suggestion payload", error, rawText);
+  }
+
+  return [];
+}
+
+async function maybeAugmentPromptWithInternet(prompt) {
+  try {
+    const internetMode = localStorage.getItem("gptinternet");
+    if (internetMode !== "true") {
+      return prompt;
+    }
+
+    const searchUrl = `https://gpt-otg-websearch-api.vercel.app/search?query=${encodeURIComponent(prompt)}`;
+    const response = await fetch(searchUrl, {
+      credentials: "omit",
+      mode: "cors",
+    });
+    if (!response.ok) {
+      return prompt;
+    }
+    const internetPrompt = await response.text();
+    return internetPrompt || prompt;
+  } catch (error) {
+    console.warn("Failed to augment prompt with internet results", error);
+    return prompt;
+  }
+}
+
+function buildSuggestionButtons(suggestions, onSelect) {
+  const wrapper = document.querySelector(".popup-suggestion-wrapper");
+  if (!wrapper) {
+    return;
+  }
+  wrapper.innerHTML = "";
+  if (!suggestions?.length) {
+    wrapper.classList.remove("has-suggestions");
+    return;
+  }
+  wrapper.classList.add("has-suggestions");
+  suggestions.forEach((suggestion) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("suggestion-button");
+    button.textContent = suggestion.text;
+    button.addEventListener("click", () => onSelect(suggestion.text));
+    wrapper.appendChild(button);
+  });
+}
+
+function extractGeminiText(payload) {
+  const parts = payload?.candidates?.[0]?.content?.parts || [];
+  return parts
+    .map((part) => part.text || "")
+    .join("")
+    .trim();
+}
+
+async function requestGeminiContent({ model, apiKey, systemPrompt, tuning, parts }) {
+  if (!apiKey) {
+    throw new Error("Gemini API key is missing. Add it from the options page.");
+  }
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  const body = {
+    contents: [
+      {
+        role: "user",
+        parts,
+      },
+    ],
+    generationConfig: {
+      temperature: tuning.temperature,
+      topP: tuning.topP,
+    },
+  };
+
+  if (systemPrompt) {
+    body.systemInstruction = {
+      role: "system",
+      parts: [{ text: systemPrompt }],
+    };
+  }
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini request failed: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  return extractGeminiText(data);
+}
+
+function guessMimeTypeFromUrl(url) {
+  try {
+    const { pathname } = new URL(url);
+    const extension = pathname.split(".").pop()?.toLowerCase();
+    switch (extension) {
+      case "png":
+        return "image/png";
+      case "gif":
+        return "image/gif";
+      case "webp":
+        return "image/webp";
+      case "svg":
+        return "image/svg+xml";
+      case "bmp":
+        return "image/bmp";
+      case "ico":
+        return "image/x-icon";
+      default:
+        return "image/jpeg";
+    }
+  } catch (error) {
+    return "image/jpeg";
+  }
+}
+
+async function fetchImageInlineParts(imageUrl) {
+  const response = await fetch(imageUrl, {
+    mode: "cors",
+    credentials: "omit",
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(`Image download failed: ${response.status} ${errorText}`.trim());
+  }
+
+  const mimeType = response.headers.get("Content-Type") || guessMimeTypeFromUrl(imageUrl);
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  const base64 = btoa(binary);
+
+  return [
+    {
+      inlineData: {
+        data: base64,
+        mimeType,
+      },
+    },
+  ];
+}
+
+async function callOpenAiCompatible({
+  prompt,
+  systemPrompt,
+  tuning,
+  onChunkReceived,
+  config,
+  apiKey,
+}) {
+  if (!apiKey) {
+    throw new Error("Add your API key for the selected provider in the options page.");
+  }
 
   const headers = {
     "Content-Type": "application/json",
     Accept: "*/*",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    Authorization: Authorization,
+    Authorization: `Bearer ${apiKey}`,
   };
-  
-/*
-  let initialPrompt = "";
- try {
-    await chrome.storage.sync.get("initialPrompt", function (items) {
-      initialPrompt = data.initialPrompt;
-    });
-  } catch (error) {
-    initialPrompt ="You are ChatGPT, a large language model trained by OpenAI. Your role is to provide succinct, relevant responses to user queries. At the end of each interaction, offer one or more suggestions for future questions the user might ask. Each suggestion should start with the phrase 'Suggestion: ', followed by the number and the question text.For instance, if a user asks 'Who is Spiderman?', you might suggest: 'Suggestion 1: How strong is Spiderman?' and 'Suggestion 2: Who are some of Spiderman's most formidable enemies?'.Users may summon you anywhere online by typing '/ai' or '/typeai'. If a user requests you to create content such as posts, captions, emails, or letters, provide only the required text without any leading phrases (e.g., 'Sure, here is...') or concluding remarks. Your response should be focused solely on fulfilling the user's request. Please respond using markdown.";
-  }*/
 
-  //check if initial prompt is empty, if not use the "You are ChatGPT, a large language model trained by OpenAI.\nCarefully heed the user's instructions. \nDon't give Respond too Long or too short,make it summary. \nRespond using Markdown. \nYou are a part of chrome extension now that was made by myanpetra99, that You could be used anywhere around the web just type like '/ai' or '/typeai' to spawn you. \nWhen user tell you to type something or tell to someone or create a post or caption or status or write an email or write a letter about something, just give the straight answer without any extra sentences before the answer like `Sure, here's the...` or like `Sure, I'd be happy to help you write a..` and it can be the other, and don't add anything after the answer, just give straight pure answer about what the user just asked.",
-  //if empty use the initial prompt from the user
-
-  let internetMode = localStorage.getItem("gptinternet");
-
-  let interneturl = `https://gpt-otg-websearch-api.vercel.app/search?query=${prompt}`
-  if (internetMode === "true" ) {
-    const internetPrompt =  await fetch(interneturl, {
-      credentials: "omit",
-      mode: "cors",
-    });
-
-    prompt = await internetPrompt.text();
-  }
-
-  const messages = [
+  const baseMessages = [
+    { role: "system", content: systemPrompt },
     { role: "user", content: prompt },
-    { role: "assistant", content: "" },
-    {
-      role: "system",
-      content: `You are ChatGPT, a large language model trained by OpenAI. 
-      Your role is to provide succinct, relevant responses to user queries. 
-      Users may summon you anywhere online by typing '/ai' or '/typeai'. If a user requests you to create content such as posts, captions, emails, or letters, 
-      provide only the required text without any leading phrases (e.g., 'Sure, here is...') or concluding remarks. 
-      Your response should be focused solely on fulfilling the user's request.`
-    },
   ];
 
-  let tuned = {};
-
-  await chrome.storage.sync.get("tune", function (items) {
-    if (items.tune) {
-      if (items.tune == "balance") {
-        tuned.temperature = 0.5;
-        tuned.topP = 0.5;
-      } else if (items.tune == "creative") {
-        tuned.temperature = 0.1;
-        tuned.topP = 0.1;
-      } else if (items.tune == "precise") {
-        tuned.temperature = 1;
-        tuned.topP = 1;
-      }
-    } else {
-      tuned.temperature = 1;
-      tuned.topP = 1;
-    }
-  });
-
-  stream = true
-  
-  let payload = {
-    messages: messages,
-    model: model,
-    temperature: 1,
+  const payload = {
+    model: config.model,
+    messages: baseMessages,
+    temperature: tuning.temperature,
+    top_p: tuning.topP,
     presence_penalty: 0,
-    top_p: 1,
     frequency_penalty: 0,
-    stream: stream,
+    stream: config.supportsStreaming,
   };
 
-  const response = await fetch(url, {
+  const response = await fetch(config.endpoint, {
     method: "POST",
-    headers: headers,
+    headers,
     body: JSON.stringify(payload),
     credentials: "omit",
     mode: "cors",
   });
 
-  if ( stream ) {
-    if (response.ok) {
-      console.log("GPT Model:" + model);
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Model request failed: ${response.status} ${errorText}`);
+  }
+
+  let aggregatedText = "";
+
+  if (config.supportsStreaming && response.body) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
       while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
+        const nextNewline = buffer.indexOf("\n");
+        if (nextNewline === -1) {
           break;
         }
-        buffer += decoder.decode(value, { stream: true });
-  
-        while (true) {
-          const nextNewline = buffer.indexOf("\n");
-          if (nextNewline === -1) {
-            break;
+
+        const line = buffer.slice(0, nextNewline);
+        buffer = buffer.slice(nextNewline + 1);
+
+        if (line.startsWith("data: ")) {
+          const jsonData = line.substring(6).trim();
+          if (!jsonData || jsonData === "[DONE]") {
+            continue;
           }
-  
-          const line = buffer.slice(0, nextNewline);
-          buffer = buffer.slice(nextNewline + 1);
-  
-          if (line.startsWith("data: ")) {
-            const jsonData = line.substring(6);
-            if (jsonData.trim() !== "[DONE]") {
-              try {
-                const chunkJson = JSON.parse(jsonData);
-                let chunkContent = chunkJson.choices[0].delta.content;
-                if (typeof chunkContent === "undefined") {
-                  chunkContent = ""; // Set to empty string if content is undefined
-                }
-                onChunkReceived(chunkContent);
-              } catch (e) {
-                console.error("Invalid JSON:", e);
-              }
+
+          try {
+            const chunkJson = JSON.parse(jsonData);
+            const chunkContent = chunkJson?.choices?.[0]?.delta?.content;
+            if (typeof chunkContent === "string") {
+              aggregatedText += chunkContent;
+              onChunkReceived(chunkContent);
             }
+          } catch (error) {
+            console.warn("Failed to parse streamed chunk", error, jsonData);
           }
         }
       }
-    } else {
-      onChunkReceived("Sorry, something went wrong");
     }
   } else {
-    if (response.ok) {
-      console.log("GPT Model:" + model);
-      const data = await response.json();
-      let chunkContent = data.choices[0].message.content;
-      if (typeof chunkContent === "undefined") {
-        chunkContent = ""; // Set to empty string if content is undefined
-      }
-      onChunkReceived(chunkContent);
-    } else {
-      onChunkReceived("Sorry, something went wrong");
-    }
+    const data = await response.json();
+    const chunkContent = data?.choices?.[0]?.message?.content || "";
+    aggregatedText += chunkContent;
+    onChunkReceived(chunkContent);
   }
 
-  let gptResult = document.querySelector("#popup-gpt-result").textContent;
-  payload.stream = false;
-  payload.messages[1].content = gptResult;
-  payload.messages[2].content = `provide one or more suggestions based on the user prompt and your response.
-  These suggestions should follow this specific format: [{"suggestion": "1", "text": "Your question here"}, {"suggestion": "2", "text": "Your second question here"}]. 
-  For instance, if a user asks 'Who is Spiderman?', you should end your response EXACTLY LIKE THIS: "GPT-SUGGEST: [{"suggestion": "1", text: "How strong is Spiderman?"}, {"suggestion": "2", "text": "Who are some of Spiderman's most formidable enemies?"}]". 
-  No leading or trailing phrases should be used around these suggestions; they should follow immediately after the answer to the initial query.`;
-  
-  const responseSuggest = await fetch(url, {
+  return {
+    text: aggregatedText,
+    context: {
+      type: "openaiCompatible",
+      config,
+      headers,
+      baseMessages,
+      tuning,
+    },
+  };
+}
+
+async function callGemini({ prompt, systemPrompt, tuning, onChunkReceived, config, imageParts = [] }) {
+  const apiKey = (cachedSettings.geminiApiKey || "").trim();
+  const parts = [...imageParts, { text: prompt }];
+  const text = await requestGeminiContent({
+    model: config.model,
+    apiKey,
+    systemPrompt,
+    tuning,
+    parts,
+  });
+
+  if (text) {
+    onChunkReceived(text);
+  }
+
+  return {
+    text,
+    context: {
+      type: "gemini",
+      config,
+      apiKey,
+      tuning,
+      systemPrompt,
+    },
+  };
+}
+
+async function callAnthropic({ prompt, systemPrompt, tuning, onChunkReceived, config }) {
+  const apiKey = (cachedSettings.anthropicApiKey || "").trim();
+  if (!apiKey) {
+    throw new Error("Add your Anthropic API key from the options page to use Claude models.");
+  }
+
+  const payload = {
+    model: config.model,
+    system: systemPrompt,
+    messages: [
+      {
+        role: "user",
+        content: [{ type: "text", text: prompt }],
+      },
+    ],
+    max_tokens: 1024,
+    temperature: tuning.temperature,
+  };
+
+  const response = await fetch(config.endpoint, {
     method: "POST",
-    headers: headers,
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Claude request failed: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  const text = data?.content?.map((part) => part.text || "").join("") || "";
+  if (text) {
+    onChunkReceived(text);
+  }
+
+  return {
+    text,
+    context: {
+      type: "anthropic",
+      config,
+      systemPrompt,
+      tuning,
+      apiKey,
+    },
+  };
+}
+
+async function generateOpenAiSuggestions({ prompt, responseText, context }) {
+  const { config, headers, baseMessages, tuning } = context;
+  const messages = [
+    ...baseMessages,
+    { role: "assistant", content: responseText },
+    { role: "system", content: FOLLOW_UP_INSTRUCTION },
+  ];
+
+  const payload = {
+    model: config.model,
+    messages,
+    temperature: Math.min(tuning.temperature + 0.1, 1),
+    top_p: Math.min(tuning.topP + 0.1, 1),
+    presence_penalty: 0,
+    frequency_penalty: 0,
+    stream: false,
+  };
+
+  const response = await fetch(config.endpoint, {
+    method: "POST",
+    headers,
     body: JSON.stringify(payload),
     credentials: "omit",
     mode: "cors",
   });
 
-//...
-if (responseSuggest.ok) {
-  console.log("GPT Model:" + model);
-  const data = await responseSuggest.json();
-  let chunkContent = data.choices[0].message.content;
-  if (typeof chunkContent === "undefined") {
-    chunkContent = "";
-  }
-  console.log(chunkContent);
-
-  const suggestIndex = chunkContent.indexOf("GPT-SUGGEST:");
-  if (suggestIndex !== -1) {
-      chunkContent = chunkContent.slice(suggestIndex + "GPT-SUGGEST:".length);
+  if (!response.ok) {
+    throw new Error(`Suggestion request failed: ${response.status}`);
   }
 
-  console.log(chunkContent);
-const suggestions = JSON.parse(chunkContent);
-suggestions.forEach((suggestion) => {
-  const button = document.createElement("button");
-  button.innerHTML = suggestion.text;
-  button.classList.add('suggestion-button'); // Add any CSS classes if you want
-  button.addEventListener("click", () => {
-    document.querySelector("#popup-gpt-result").textContent = "";
-    fetchFreeGPTResponse(suggestion.text, onChunkReceived);
+  const data = await response.json();
+  const text = data?.choices?.[0]?.message?.content || "";
+  return parseSuggestionsFromText(text);
+}
+
+async function generateGeminiSuggestions({ prompt, responseText, context }) {
+  const { config, apiKey, systemPrompt, tuning } = context;
+  const instruction = `The user asked: ${prompt}.\nYou responded: ${responseText}.\n${FOLLOW_UP_INSTRUCTION}`;
+
+  const text = await requestGeminiContent({
+    model: config.model,
+    apiKey,
+    systemPrompt,
+    tuning,
+    parts: [{ text: instruction }],
   });
 
-  document.querySelector(".popup-suggestion-wrapper").appendChild(button);
-});
-
-} 
+  return parseSuggestionsFromText(text);
 }
+
+async function generateAnthropicSuggestions({ prompt, responseText, context }) {
+  const { config, apiKey, systemPrompt, tuning } = context;
+  const payload = {
+    model: config.model,
+    system: `${systemPrompt}\n\n${FOLLOW_UP_INSTRUCTION}`.trim(),
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `User prompt: ${prompt}\nAssistant reply: ${responseText}`,
+          },
+        ],
+      },
+    ],
+    max_tokens: 512,
+    temperature: Math.min(tuning.temperature + 0.15, 1),
+  };
+
+  const response = await fetch(config.endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Suggestion request failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = data?.content?.map((part) => part.text || "").join("") || "";
+  return parseSuggestionsFromText(text);
+}
+
+async function renderSuggestions({ prompt, responseText, result }) {
+  try {
+    if (!responseText) {
+      return;
+    }
+
+    let suggestions = [];
+    if (result.context?.type === "openaiCompatible") {
+      suggestions = await generateOpenAiSuggestions({
+        prompt,
+        responseText,
+        context: result.context,
+      });
+    } else if (result.context?.type === "gemini") {
+      suggestions = await generateGeminiSuggestions({
+        prompt,
+        responseText,
+        context: result.context,
+      });
+    } else if (result.context?.type === "anthropic") {
+      suggestions = await generateAnthropicSuggestions({
+        prompt,
+        responseText,
+        context: result.context,
+      });
+    }
+
+    if (!suggestions.length) {
+      return;
+    }
+
+    buildSuggestionButtons(suggestions, (followUpPrompt) => {
+      const resultElement = document.querySelector("#popup-gpt-result");
+      if (resultElement) {
+        resultElement.textContent = "";
+      }
+      fetchFreeGPTResponse(followUpPrompt, (chunk) => {
+        if (resultElement) {
+          resultElement.textContent += chunk;
+        }
+      });
+    });
+  } catch (error) {
+    console.warn("Unable to render suggestions", error);
+  }
+}
+
+async function fetchFreeGPTResponse(prompt, onChunkReceived, options = {}) {
+  const suggestionWrapper = document.querySelector(".popup-suggestion-wrapper");
+  if (suggestionWrapper) {
+    suggestionWrapper.innerHTML = "";
+    suggestionWrapper.classList.remove("has-suggestions");
+  }
+
+  ttsReady = false;
+
+  const settings = { ...DEFAULT_SETTINGS, ...cachedSettings };
+  const config = getModelConfig(settings.gptModel);
+  const systemPrompt = (settings.initialPrompt || DEFAULT_SETTINGS.initialPrompt).trim();
+  const tuning = getTuningPreset(settings.tune);
+
+  let preparedPrompt = prompt;
+  if (!options.imageParts?.length) {
+    preparedPrompt = await maybeAugmentPromptWithInternet(prompt);
+  }
+
+  if (options.imageParts?.length && !config.capabilities.includes("vision")) {
+    onChunkReceived(
+      "The selected model cannot analyze images. Please choose a vision-capable model in the options page."
+    );
+    return "";
+  }
+
+  try {
+    let result;
+    if (config.provider === "openai" || config.provider === "deepseek") {
+      const apiKey = getApiKeyForProvider(config.provider);
+      result = await callOpenAiCompatible({
+        prompt: preparedPrompt,
+        systemPrompt,
+        tuning,
+        onChunkReceived,
+        config,
+        apiKey,
+      });
+    } else if (config.provider === "gemini") {
+      result = await callGemini({
+        prompt: preparedPrompt,
+        systemPrompt,
+        tuning,
+        onChunkReceived,
+        config,
+        imageParts: options.imageParts,
+      });
+    } else if (config.provider === "anthropic") {
+      result = await callAnthropic({
+        prompt: preparedPrompt,
+        systemPrompt,
+        tuning,
+        onChunkReceived,
+        config,
+      });
+    } else {
+      throw new Error(`Unsupported provider: ${config.provider}`);
+    }
+
+    ttsReady = Boolean(result.text);
+    await renderSuggestions({ prompt: preparedPrompt, responseText: result.text, result });
+    return result.text;
+  } catch (error) {
+    console.error("AI request failed", error);
+    const message = error?.message || "";
+    if (/Gemini API key/.test(message)) {
+      onChunkReceived("Please add your Gemini API key from the options page before using this model.");
+    } else if (/Anthropic API key/.test(message)) {
+      onChunkReceived("Please add your Anthropic API key to chat with Claude.");
+    } else if (/Add your API key/.test(message)) {
+      onChunkReceived("Please add the required API key for this model in the extension options.");
+    } else {
+      onChunkReceived("Sorry, something went wrong");
+    }
+    return "";
+  }
+}
+
 // list dictionary command
 const dictCommand = {
   "/ai": { service: "gpt", mode: "ASK" },
@@ -277,30 +804,43 @@ function createPopup() {
     }
   };
 
-  const closeButton = document.createElement("button");
-  closeButton.innerHTML = "&times;";
-  closeButton.classList.add("popup-close-button");
-  closeButton.onclick = () => hidePopup(popup, input, gptResult);
+  const popupWrapper = document.createElement("div");
+  popupWrapper.classList.add("popup-wrapper");
 
-  const gearButton = document.createElement("button");
-  gearButton.innerHTML = "&#9881;"; // Add gear icon as HTML entity
-  gearButton.classList.add("popup-gear-button"); // Add a CSS class to style the button
-  gearButton.onclick = () => {
-    chrome.runtime.sendMessage({ action: "OpenOptionsPage" });
-  };
+  const header = document.createElement("div");
+  header.classList.add("popup-header");
 
-  // Append the gear button to the popup
+  const titleStack = document.createElement("div");
+  titleStack.classList.add("popup-title");
+  const title = document.createElement("p");
+  title.textContent = "Hello, May I help?";
+  titleStack.appendChild(title);
+
+  const toolbar = document.createElement("div");
+  toolbar.classList.add("popup-toolbar");
+
+  const internetButton = document.createElement("button");
+  internetButton.type = "button";
+  internetButton.innerText = "WWW";
+  internetButton.classList.add("popup-icon-button");
+  internetButton.title = "Toggle web search";
+  internetButton.id = "internet-button";
+  if (localStorage.getItem("gptinternet") === "true") {
+    internetButton.classList.add("enabled");
+  }
+  internetButton.addEventListener("click", () => {
+    ToggleInternetButton();
+  });
 
   const ttsButton = document.createElement("button");
-  ttsButton.innerHTML = "TTS"; // Or any other label/icon you prefer
-  ttsButton.classList.add("popup-tts-button"); // Add a CSS class to style the button
-  popup.appendChild(ttsButton); // Add it next to the gear button
+  ttsButton.type = "button";
+  ttsButton.innerText = "TTS";
+  ttsButton.classList.add("popup-icon-button");
+  ttsButton.title = "Speak the answer";
   ttsButton.onclick = () => {
     if (ttsReady) {
       const gptResult = document.querySelector("#popup-gpt-result");
       const utterance = new SpeechSynthesisUtterance(gptResult.textContent);
-
-      // This function will be called when the list of voices has been populated
       function setVoice() {
         const voice = window.speechSynthesis
           .getVoices()
@@ -308,29 +848,37 @@ function createPopup() {
         if (voice) utterance.voice = voice;
         window.speechSynthesis.speak(utterance);
       }
-
-      // If the voices are already loaded, use the desired voice immediately
       if (window.speechSynthesis.getVoices().length) {
         setVoice();
       } else {
-        // If the voices are not yet loaded, wait for the voiceschanged event before setting the voice
         window.speechSynthesis.onvoiceschanged = setVoice;
       }
     }
   };
 
-  const internetButton = document.createElement("button");
-  internetButton.innerHTML =  "WWW" // Add gear icon as HTML entity
-  internetButton.classList.add("popup-internet-button");
-  internetButton.id = "internet-button";
-
-  internetButton.onclick = () => {
-    ToggleInternetButton();
+  const gearButton = document.createElement("button");
+  gearButton.type = "button";
+  gearButton.innerHTML = "&#9881;";
+  gearButton.classList.add("popup-icon-button");
+  gearButton.title = "Open settings";
+  gearButton.onclick = () => {
+    chrome.runtime.sendMessage({ action: "OpenOptionsPage" });
   };
 
-  popup.appendChild(internetButton);
-  popup.appendChild(gearButton);
-  
+  const closeButton = document.createElement("button");
+  closeButton.type = "button";
+  closeButton.innerHTML = "&times;";
+  closeButton.classList.add("popup-icon-button", "popup-close-button");
+  closeButton.title = "Close";
+  closeButton.onclick = () => hidePopup(popup, input, gptResult);
+
+  toolbar.appendChild(internetButton);
+  toolbar.appendChild(ttsButton);
+  toolbar.appendChild(gearButton);
+  toolbar.appendChild(closeButton);
+
+  header.appendChild(titleStack);
+  header.appendChild(toolbar);
 
   const inputWrapper = document.createElement("div");
   inputWrapper.style.display = "flex";
@@ -350,16 +898,9 @@ function createPopup() {
   inputWrapper.appendChild(input);
 
   const suggestionWrapper = document.createElement("div");
-  suggestionWrapper.style.display = "flex";
-  suggestionWrapper.style.flexDirection = "column";
   suggestionWrapper.classList.add("popup-suggestion-wrapper");
 
-  // Add a wrapper for the popup
-  const popupWrapper = document.createElement("div");
-  popupWrapper.classList.add("popup-wrapper");
-
-  // Move existing elements into the wrapper
-  popupWrapper.appendChild(closeButton);
+  popupWrapper.appendChild(header);
   popupWrapper.appendChild(inputWrapper);
 
   const textareaWrapper = document.createElement("div");
@@ -670,7 +1211,7 @@ function createPopup() {
       console.log(mousePosition.x);
       console.log(mousePosition.y);
 
-      
+
       // Get the selected text from the request
       const selectedText = request.selectionText;
       if (selectedText) {
@@ -692,28 +1233,56 @@ function createPopup() {
           }
 
           gptResult.textContent += chunk;
-          
-          
+
+
         });
         ttsReady = true;
         showPopup(popup, null, input, { x: mousePosition.x, y: mousePosition.y });
       }
     }
+
+    if (request.text === "analyzeImage") {
+      const mousePosition = request.mousePosition || { x: 0, y: 0 };
+      const popup = document.getElementById("input-focus-popup") || createPopup();
+      const input = popup.querySelector(".popup-input");
+      const gptResult = popup.querySelector("#popup-gpt-result");
+
+      gptResult.textContent = "Analyzing image…";
+      ttsReady = false;
+      showPopup(popup, null, input, { x: mousePosition.x, y: mousePosition.y });
+
+      try {
+        const imageParts = await fetchImageInlineParts(request.imageUrl);
+        gptResult.textContent = "";
+        await fetchFreeGPTResponse(
+          "Describe this image in detail, highlighting subjects, colors, emotions, and potential context.",
+          (chunk) => {
+            if (chunk) {
+              gptResult.textContent += chunk;
+            }
+          },
+          { imageParts }
+        );
+        ttsReady = true;
+      } catch (error) {
+        console.error("Image analysis failed", error);
+        const errorMessage =
+          error?.message?.replace(/^Error:\s*/, "") ||
+          "Unable to analyze this image. Try a different image or enable a Gemini model.";
+        gptResult.textContent = errorMessage;
+      }
+    }
   });
 
   function ToggleInternetButton() {
-    
-      let internetMode = localStorage.getItem("gptinternet");
-
-      if (internetMode === "false" || internetMode === null) {
-        localStorage.setItem("gptinternet", "true")
-        internetButton.classList.add("enabled"); 
-      }
-
-      if (internetMode === "true") {
-        localStorage.setItem("gptinternet", "false")
-        internetButton.classList.remove("enabled");
-      }
+    const internetMode = localStorage.getItem("gptinternet");
+    if (internetMode === "true") {
+      localStorage.setItem("gptinternet", "false");
+      internetButton.classList.remove("enabled");
+    } else {
+      localStorage.setItem("gptinternet", "true");
+      internetButton.classList.add("enabled");
+    }
   }
 
  
