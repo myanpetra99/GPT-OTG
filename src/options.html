@@ -1,70 +1,95 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
-    <title>Setting</title>
-    <link rel="icon" href="icon.png" type="image/png" sizes="16x16" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPT-OTG Settings</title>
+    <link rel="icon" href="icon.png" type="image/png" sizes="32x32" />
+    <link rel="stylesheet" href="options.css" />
   </head>
-  <link rel="stylesheet" href="options.css" />
   <body>
-    <div class="wrapper">
-      <div class="setting">
-        <div class="setting-header">
-        <img src="icon.png" alt="icon" width="100" height="100" />
-        <h1>GPT-OTG Options</h1>
+    <main class="options">
+      <header class="options__header">
+        <img class="options__logo" src="icon.png" alt="GPT-OTG" width="72" height="72" />
+        <div>
+          <h1 class="options__title">GPT-OTG Preferences</h1>
+          <p class="options__subtitle">Tune the assistant, choose a model, and manage integrations.</p>
         </div>
-        </div>
-        <div id="contentWrapper">
-            <div class="label-on-left">
-              <label for="model">Select AI Model</label>
-              <select id="model">
-                <option selected value="gpt-3.5-turbo">ChatGPT 3.5 Turbo</option>
-                <option value="gpt-4">ChatGPT 4</option>
-                <option value="bing">Bing Chat</option>
-                <option value="bard">Google Bard</option>
-                <option value="custom">Add your API</option>
-              </select>
-            </div>
+      </header>
 
+      <form id="settingsForm" class="options__form">
+        <section class="card">
+          <h2 class="card__title">AI Model</h2>
+          <div class="field">
+            <label class="field__label" for="model">Provider &amp; model</label>
+            <select class="field__input" id="model" name="model">
+              <option value="openai-gpt-3.5-turbo">Community ChatGPT 3.5</option>
+              <option value="gemini-pro">Google Gemini Pro (text)</option>
+              <option value="gemini-pro-vision">Google Gemini Pro Vision (image &amp; text)</option>
+            </select>
+            <p class="field__hint" id="modelHint"></p>
+          </div>
 
-            <div class="label-on-left">
-              <label for="tune">Tune the model</label>
-              <select id="tune">
-                <option value="creative">Creative</option>
-                <option selected value="balance">Balance</option>
-                <option value="precise">Precise</option>
-              </select>
-            </div>
-    
-            <div class="label-on-left">
-              <label for="aiCommand">Enable command '/ai'</label>
-              <input type="checkbox" id="aiCommand" name="aiCommand" value="aiCommand" />
-            </div>
+          <div class="field" id="geminiKeyField">
+            <label class="field__label" for="geminiApiKey">Gemini API key</label>
+            <input
+              class="field__input"
+              type="password"
+              id="geminiApiKey"
+              name="geminiApiKey"
+              placeholder="AIza..."
+              autocomplete="off"
+            />
+            <p class="field__hint">Keys are stored locally via Chrome sync. Required for Gemini models.</p>
+          </div>
+        </section>
 
-            <div class="label-on-left">
-              <label for="googleSearch">Enable Google Search Sidebar
+        <section class="card">
+          <h2 class="card__title">Behavior</h2>
+          <div class="field">
+            <label class="field__label" for="tune">Tone preset</label>
+            <select class="field__input" id="tune" name="tune">
+              <option value="creative">Creative</option>
+              <option value="balance">Balanced</option>
+              <option value="precise">Precise</option>
+            </select>
+          </div>
 
-              </label>
-              <input type="checkbox" id="googleSearch" name="googleSearch" value="googleSearch" />
-            </div>
+          <div class="field">
+            <label class="field__label" for="initialPrompt">System prompt</label>
+            <textarea class="field__input field__input--textarea" id="initialPrompt" name="initialPrompt" rows="6"></textarea>
+            <p class="field__hint">Customize how the assistant introduces itself and responds.</p>
+          </div>
+        </section>
 
-            <div class="label-on-left">
-              <label for="youtubeSummary">Enable Youtube Summary Sidebar
+        <section class="card">
+          <h2 class="card__title">Shortcuts &amp; Integrations</h2>
+          <label class="toggle">
+            <input class="toggle__input" type="checkbox" id="aiCommand" name="aiCommand" />
+            <span class="toggle__label">Enable /ai command</span>
+          </label>
 
-              </label>
-              <input type="checkbox" id="youtubeSummary" name="youtubeSummary" value="youtubeSummary" />
-            </div>
-    
-            <div class="label-on-left">
-              <label for="initialPrompt">initial prompt</label>
-              <textarea id="initialPrompt" rows="7"></textarea>
-            </div>
-    
-            </div>
+          <label class="toggle">
+            <input class="toggle__input" type="checkbox" id="googleSearch" name="googleSearch" />
+            <span class="toggle__label">Show Google search sidebar results</span>
+          </label>
 
-        <div class="setting">
-        <button id="save">Save</button>
-        <button id="reset">Reset</button>
-        </div>
-    </div>
+          <label class="toggle">
+            <input class="toggle__input" type="checkbox" id="youtubeSummary" name="youtubeSummary" />
+            <span class="toggle__label">Show YouTube summary button</span>
+          </label>
+        </section>
+
+        <footer class="options__footer">
+          <span class="options__status" id="statusMessage" role="status" aria-live="polite"></span>
+          <div class="options__actions">
+            <button class="btn btn--secondary" type="button" id="reset">Reset</button>
+            <button class="btn" type="button" id="save">Save changes</button>
+          </div>
+        </footer>
+      </form>
+    </main>
+
     <script src="options.js"></script>
   </body>
 </html>
