@@ -10,6 +10,13 @@
     "storage",
     "tabs"
   ],
+  "host_permissions": [
+    "https://api.openai.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.anthropic.com/*",
+    "https://api.deepseek.com/*",
+    "https://gpt-otg-websearch-api.vercel.app/*"
+  ],
   "action": {
     "default_title": "Open"
   },

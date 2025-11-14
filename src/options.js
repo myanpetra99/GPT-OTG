@@ -1,6 +1,6 @@
 const DEFAULT_SETTINGS = {
   tune: "balance",
-  gptModel: "openai-gpt-3.5-turbo",
+  gptModel: "openai-gpt-4o-mini",
   youtubeSummary: true,
   aiCommand: true,
   googleSearch: true,
@@ -9,22 +9,55 @@ Carefully heed the user's instructions.
 Respond using Markdown and keep answers concise but complete.
 When creating content for the user, answer directly without filler phrases.
 After answering, provide follow-up ideas prefixed with \"GPT-SUGGEST:\" in JSON format.`,
+  openaiApiKey: "",
   geminiApiKey: "",
+  anthropicApiKey: "",
+  deepseekApiKey: "",
 };
 
 const MODEL_METADATA = {
-  "openai-gpt-3.5-turbo": {
-    requiresKey: false,
-    hint: "Community maintained endpoint. Great for quick replies.",
-  },
-  "gemini-pro": {
+  "openai-gpt-4o-mini": {
     requiresKey: true,
-    hint: "Google Gemini Pro for high quality text responses.",
+    provider: "openai",
+    hint: "Fastest OpenAI GPT-4o tier with multimodal support.",
   },
-  "gemini-pro-vision": {
+  "openai-gpt-4o": {
     requiresKey: true,
-    hint: "Gemini Pro Vision understands both images and text.",
+    provider: "openai",
+    hint: "Best quality OpenAI GPT-4o responses.",
   },
+  "gemini-1.5-flash": {
+    requiresKey: true,
+    provider: "gemini",
+    hint: "Gemini 1.5 Flash supports text + images.",
+  },
+  "gemini-2.0-flash": {
+    requiresKey: true,
+    provider: "gemini",
+    hint: "Latest Gemini 2.0 Flash experimental model.",
+  },
+  "anthropic-claude-3-5-sonnet": {
+    requiresKey: true,
+    provider: "anthropic",
+    hint: "Claude 3.5 Sonnet excels at reasoning and structure.",
+  },
+  "deepseek-chat": {
+    requiresKey: true,
+    provider: "deepseek",
+    hint: "DeepSeek Chat is great for rapid drafts.",
+  },
+  "deepseek-reasoner": {
+    requiresKey: true,
+    provider: "deepseek",
+    hint: "DeepSeek Reasoner focuses on analytical outputs.",
+  },
+};
+
+const PROVIDER_FIELDS = {
+  openai: "openaiApiKey",
+  gemini: "geminiApiKey",
+  anthropic: "anthropicApiKey",
+  deepseek: "deepseekApiKey",
 };
 
 let isDirty = false;
@@ -56,18 +89,28 @@ function setStatus(message, type = "info") {
 function updateModelUi(modelId) {
   const metadata = MODEL_METADATA[modelId] || MODEL_METADATA[DEFAULT_SETTINGS.gptModel];
   const hint = metadata?.hint ?? "";
-  const requiresKey = Boolean(metadata?.requiresKey);
+  const provider = metadata?.provider;
 
   const modelHint = $("#modelHint");
-  const geminiField = $("#geminiKeyField");
   modelHint.textContent = hint;
 
-  if (requiresKey) {
-    geminiField.classList.remove("hidden");
-    $("#geminiApiKey").setAttribute("required", "required");
-  } else {
-    geminiField.classList.add("hidden");
-    $("#geminiApiKey").removeAttribute("required");
+  document
+    .querySelectorAll('[data-provider-key]')
+    .forEach((field) => field.classList.add("hidden"));
+
+  Object.values(PROVIDER_FIELDS).forEach((inputId) => {
+    $("#" + inputId).removeAttribute("required");
+  });
+
+  if (provider && PROVIDER_FIELDS[provider]) {
+    const field = document.querySelector(`[data-provider-key="${provider}"]`);
+    if (field) {
+      field.classList.remove("hidden");
+    }
+    const input = $("#" + PROVIDER_FIELDS[provider]);
+    if (metadata?.requiresKey && input) {
+      input.setAttribute("required", "required");
+    }
   }
 }
 
@@ -93,7 +136,10 @@ function loadSettings() {
     $("#googleSearch").checked = Boolean(items.googleSearch);
     $("#youtubeSummary").checked = Boolean(items.youtubeSummary);
     $("#initialPrompt").value = items.initialPrompt;
+    $("#openaiApiKey").value = items.openaiApiKey ?? "";
     $("#geminiApiKey").value = items.geminiApiKey ?? "";
+    $("#anthropicApiKey").value = items.anthropicApiKey ?? "";
+    $("#deepseekApiKey").value = items.deepseekApiKey ?? "";
 
     updateModelUi(items.gptModel);
     clearDirtyState();
@@ -109,14 +155,23 @@ function saveSettings() {
     googleSearch: $("#googleSearch").checked,
     youtubeSummary: $("#youtubeSummary").checked,
     initialPrompt: $("#initialPrompt").value.trim(),
+    openaiApiKey: $("#openaiApiKey").value.trim(),
     geminiApiKey: $("#geminiApiKey").value.trim(),
+    anthropicApiKey: $("#anthropicApiKey").value.trim(),
+    deepseekApiKey: $("#deepseekApiKey").value.trim(),
   };
 
   const metadata = MODEL_METADATA[payload.gptModel];
-  if (metadata?.requiresKey && !payload.geminiApiKey) {
-    setStatus("Gemini API key is required for the selected model.", "error");
-    $("#geminiApiKey").focus();
-    return;
+  if (metadata?.requiresKey) {
+    const providerKey = metadata.provider && PROVIDER_FIELDS[metadata.provider];
+    if (providerKey && !payload[providerKey]) {
+      const friendlyName = metadata.provider
+        ? metadata.provider.charAt(0).toUpperCase() + metadata.provider.slice(1)
+        : "Selected";
+      setStatus(`${friendlyName} API key is required for this model.`, "error");
+      $("#" + providerKey)?.focus();
+      return;
+    }
   }
 
   chrome.storage.sync.set(payload, () => {

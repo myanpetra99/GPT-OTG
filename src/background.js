@@ -13,8 +13,11 @@ const DEFAULT_SETTINGS = {
   youtubeSummary: true,
   aiCommand: true,
   googleSearch: true,
-  gptModel: "openai-gpt-3.5-turbo",
+  gptModel: "openai-gpt-4o-mini",
+  openaiApiKey: "",
   geminiApiKey: "",
+  anthropicApiKey: "",
+  deepseekApiKey: "",
   initialPrompt: `You are ChatGPT, a large language model trained by OpenAI.
 Carefully heed the user's instructions.
 Respond using Markdown and keep answers concise but complete.

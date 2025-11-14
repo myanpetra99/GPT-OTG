@@ -104,6 +104,19 @@ body {
   margin-bottom: 0;
 }
 
+#keyFields {
+  margin-bottom: 0;
+  gap: 0;
+}
+
+#keyFields .field {
+  margin-bottom: 1rem;
+}
+
+#keyFields .field:last-child {
+  margin-bottom: 0;
+}
+
 .field__label {
   font-weight: 600;
   font-size: 0.95rem;

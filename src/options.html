@@ -23,24 +23,74 @@
           <div class="field">
             <label class="field__label" for="model">Provider &amp; model</label>
             <select class="field__input" id="model" name="model">
-              <option value="openai-gpt-3.5-turbo">Community ChatGPT 3.5</option>
-              <option value="gemini-pro">Google Gemini Pro (text)</option>
-              <option value="gemini-pro-vision">Google Gemini Pro Vision (image &amp; text)</option>
+              <optgroup label="OpenAI">
+                <option value="openai-gpt-4o-mini">GPT-4o mini (fast, multimodal)</option>
+                <option value="openai-gpt-4o">GPT-4o (best quality)</option>
+              </optgroup>
+              <optgroup label="Google Gemini">
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash (vision)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash Experimental</option>
+              </optgroup>
+              <optgroup label="Anthropic">
+                <option value="anthropic-claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+              </optgroup>
+              <optgroup label="DeepSeek">
+                <option value="deepseek-chat">DeepSeek Chat</option>
+                <option value="deepseek-reasoner">DeepSeek Reasoner</option>
+              </optgroup>
             </select>
             <p class="field__hint" id="modelHint"></p>
           </div>
 
-          <div class="field" id="geminiKeyField">
-            <label class="field__label" for="geminiApiKey">Gemini API key</label>
-            <input
-              class="field__input"
-              type="password"
-              id="geminiApiKey"
-              name="geminiApiKey"
-              placeholder="AIza..."
-              autocomplete="off"
-            />
-            <p class="field__hint">Keys are stored locally via Chrome sync. Required for Gemini models.</p>
+          <div class="field" id="keyFields">
+            <div class="field hidden" data-provider-key="openai">
+              <label class="field__label" for="openaiApiKey">OpenAI API key</label>
+              <input
+                class="field__input"
+                type="password"
+                id="openaiApiKey"
+                name="openaiApiKey"
+                placeholder="sk-..."
+                autocomplete="off"
+              />
+              <p class="field__hint">Used for GPT-4o models.</p>
+            </div>
+            <div class="field hidden" data-provider-key="gemini">
+              <label class="field__label" for="geminiApiKey">Gemini API key</label>
+              <input
+                class="field__input"
+                type="password"
+                id="geminiApiKey"
+                name="geminiApiKey"
+                placeholder="AIza..."
+                autocomplete="off"
+              />
+              <p class="field__hint">Required to access Gemini 1.5 and 2.0 models.</p>
+            </div>
+            <div class="field hidden" data-provider-key="anthropic">
+              <label class="field__label" for="anthropicApiKey">Anthropic API key</label>
+              <input
+                class="field__input"
+                type="password"
+                id="anthropicApiKey"
+                name="anthropicApiKey"
+                placeholder="anthropic-..."
+                autocomplete="off"
+              />
+              <p class="field__hint">Used for Claude 3.5 Sonnet.</p>
+            </div>
+            <div class="field hidden" data-provider-key="deepseek">
+              <label class="field__label" for="deepseekApiKey">DeepSeek API key</label>
+              <input
+                class="field__input"
+                type="password"
+                id="deepseekApiKey"
+                name="deepseekApiKey"
+                placeholder="sk-..."
+                autocomplete="off"
+              />
+              <p class="field__hint">Used for DeepSeek Chat/Reasoner.</p>
+            </div>
           </div>
         </section>
 

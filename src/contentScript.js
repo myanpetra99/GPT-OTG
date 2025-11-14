@@ -1,6 +1,6 @@
 const DEFAULT_SETTINGS = {
   tune: "balance",
-  gptModel: "openai-gpt-3.5-turbo",
+  gptModel: "openai-gpt-4o-mini",
   youtubeSummary: true,
   aiCommand: true,
   googleSearch: true,
@@ -9,35 +9,73 @@ Carefully heed the user's instructions.
 Respond using Markdown and keep answers concise but complete.
 When creating content for the user, answer directly without filler phrases.
 After answering, provide follow-up ideas prefixed with "GPT-SUGGEST:" in JSON format.`,
+  openaiApiKey: "",
   geminiApiKey: "",
+  anthropicApiKey: "",
+  deepseekApiKey: "",
 };
 
 const MODEL_CONFIGS = {
-  "openai-gpt-3.5-turbo": {
-    id: "openai-gpt-3.5-turbo",
-    name: "Community ChatGPT 3.5",
-    provider: "openaiProxy",
-    model: "gpt-3.5-turbo",
-    endpoint: "https://free.churchless.tech/v1/chat/completions",
-    authorization: "Bearer MyDiscord",
+  "openai-gpt-4o-mini": {
+    id: "openai-gpt-4o-mini",
+    name: "OpenAI GPT-4o mini",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    endpoint: "https://api.openai.com/v1/chat/completions",
     supportsStreaming: true,
     capabilities: ["text"],
   },
-  "gemini-pro": {
-    id: "gemini-pro",
-    name: "Gemini Pro",
+  "openai-gpt-4o": {
+    id: "openai-gpt-4o",
+    name: "OpenAI GPT-4o",
+    provider: "openai",
+    model: "gpt-4o",
+    endpoint: "https://api.openai.com/v1/chat/completions",
+    supportsStreaming: true,
+    capabilities: ["text"],
+  },
+  "gemini-1.5-flash": {
+    id: "gemini-1.5-flash",
+    name: "Gemini 1.5 Flash",
     provider: "gemini",
-    model: "gemini-pro",
+    model: "gemini-1.5-flash",
+    supportsStreaming: false,
+    capabilities: ["text", "vision"],
+  },
+  "gemini-2.0-flash": {
+    id: "gemini-2.0-flash",
+    name: "Gemini 2.0 Flash",
+    provider: "gemini",
+    model: "gemini-2.0-flash-exp",
     supportsStreaming: false,
     capabilities: ["text"],
   },
-  "gemini-pro-vision": {
-    id: "gemini-pro-vision",
-    name: "Gemini Pro Vision",
-    provider: "gemini",
-    model: "gemini-pro-vision",
+  "anthropic-claude-3-5-sonnet": {
+    id: "anthropic-claude-3-5-sonnet",
+    name: "Claude 3.5 Sonnet",
+    provider: "anthropic",
+    model: "claude-3-5-sonnet-20240620",
+    endpoint: "https://api.anthropic.com/v1/messages",
     supportsStreaming: false,
-    capabilities: ["text", "vision"],
+    capabilities: ["text"],
+  },
+  "deepseek-chat": {
+    id: "deepseek-chat",
+    name: "DeepSeek Chat",
+    provider: "deepseek",
+    model: "deepseek-chat",
+    endpoint: "https://api.deepseek.com/chat/completions",
+    supportsStreaming: true,
+    capabilities: ["text"],
+  },
+  "deepseek-reasoner": {
+    id: "deepseek-reasoner",
+    name: "DeepSeek Reasoner",
+    provider: "deepseek",
+    model: "deepseek-reasoner",
+    endpoint: "https://api.deepseek.com/chat/completions",
+    supportsStreaming: true,
+    capabilities: ["text"],
   },
 };
 
@@ -81,24 +119,66 @@ function getTuningPreset(tune) {
   return TUNING_PRESETS[tune] || TUNING_PRESETS.balance;
 }
 
+function getApiKeyForProvider(provider) {
+  switch (provider) {
+    case "openai":
+      return (cachedSettings.openaiApiKey || "").trim();
+    case "gemini":
+      return (cachedSettings.geminiApiKey || "").trim();
+    case "anthropic":
+      return (cachedSettings.anthropicApiKey || "").trim();
+    case "deepseek":
+      return (cachedSettings.deepseekApiKey || "").trim();
+    default:
+      return "";
+  }
+}
+
 function parseSuggestionsFromText(rawText) {
   if (!rawText) {
     return [];
   }
 
   const withoutPrefix = rawText.replace(/^GPT-SUGGEST:\s*/i, "").trim();
-  const jsonMatch = withoutPrefix.match(/\[.*\]/s);
-  const candidate = jsonMatch ? jsonMatch[0] : withoutPrefix;
+  const unwrapped = withoutPrefix
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
+    .trim();
+
+  const jsonMatch = unwrapped.match(/\{.*\}|\[.*\]/s);
+  const candidate = jsonMatch ? jsonMatch[0] : unwrapped;
 
   try {
     const parsed = JSON.parse(candidate);
     if (Array.isArray(parsed)) {
       return parsed
-        .map((item) => ({
-          suggestion: item.suggestion || item.id || "",
-          text: item.text || "",
-        }))
+        .map((item) => {
+          if (typeof item === "string") {
+            return { suggestion: item, text: item };
+          }
+          return {
+            suggestion: item.suggestion || item.id || item.text || "",
+            text: item.text || item.suggestion || "",
+          };
+        })
         .filter((item) => item.text);
+    }
+
+    if (parsed && typeof parsed === "object") {
+      const fromKey = parsed["GPT-SUGGEST"] || parsed.suggestions || parsed.items;
+      if (Array.isArray(fromKey)) {
+        return fromKey
+          .map((text) => {
+            if (typeof text === "string") {
+              return { suggestion: text, text };
+            }
+            return {
+              suggestion: text?.suggestion || text?.text || "",
+              text: text?.text || text?.suggestion || "",
+            };
+          })
+          .filter((item) => item.text);
+      }
     }
   } catch (error) {
     console.warn("Unable to parse suggestion payload", error, rawText);
@@ -136,6 +216,11 @@ function buildSuggestionButtons(suggestions, onSelect) {
     return;
   }
   wrapper.innerHTML = "";
+  if (!suggestions?.length) {
+    wrapper.classList.remove("has-suggestions");
+    return;
+  }
+  wrapper.classList.add("has-suggestions");
   suggestions.forEach((suggestion) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -254,12 +339,22 @@ async function fetchImageInlineParts(imageUrl) {
   ];
 }
 
-async function callOpenAiProxy({ prompt, systemPrompt, tuning, onChunkReceived, config }) {
+async function callOpenAiCompatible({
+  prompt,
+  systemPrompt,
+  tuning,
+  onChunkReceived,
+  config,
+  apiKey,
+}) {
+  if (!apiKey) {
+    throw new Error("Add your API key for the selected provider in the options page.");
+  }
+
   const headers = {
     "Content-Type": "application/json",
     Accept: "*/*",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    Authorization: config.authorization,
+    Authorization: `Bearer ${apiKey}`,
   };
 
   const baseMessages = [
@@ -343,7 +438,7 @@ async function callOpenAiProxy({ prompt, systemPrompt, tuning, onChunkReceived, 
   return {
     text: aggregatedText,
     context: {
-      type: "openaiProxy",
+      type: "openaiCompatible",
       config,
       headers,
       baseMessages,
@@ -375,6 +470,58 @@ async function callGemini({ prompt, systemPrompt, tuning, onChunkReceived, confi
       apiKey,
       tuning,
       systemPrompt,
+    },
+  };
+}
+
+async function callAnthropic({ prompt, systemPrompt, tuning, onChunkReceived, config }) {
+  const apiKey = (cachedSettings.anthropicApiKey || "").trim();
+  if (!apiKey) {
+    throw new Error("Add your Anthropic API key from the options page to use Claude models.");
+  }
+
+  const payload = {
+    model: config.model,
+    system: systemPrompt,
+    messages: [
+      {
+        role: "user",
+        content: [{ type: "text", text: prompt }],
+      },
+    ],
+    max_tokens: 1024,
+    temperature: tuning.temperature,
+  };
+
+  const response = await fetch(config.endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Claude request failed: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  const text = data?.content?.map((part) => part.text || "").join("") || "";
+  if (text) {
+    onChunkReceived(text);
+  }
+
+  return {
+    text,
+    context: {
+      type: "anthropic",
+      config,
+      systemPrompt,
+      tuning,
+      apiKey,
     },
   };
 }
@@ -429,6 +576,45 @@ async function generateGeminiSuggestions({ prompt, responseText, context }) {
   return parseSuggestionsFromText(text);
 }
 
+async function generateAnthropicSuggestions({ prompt, responseText, context }) {
+  const { config, apiKey, systemPrompt, tuning } = context;
+  const payload = {
+    model: config.model,
+    system: `${systemPrompt}\n\n${FOLLOW_UP_INSTRUCTION}`.trim(),
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `User prompt: ${prompt}\nAssistant reply: ${responseText}`,
+          },
+        ],
+      },
+    ],
+    max_tokens: 512,
+    temperature: Math.min(tuning.temperature + 0.15, 1),
+  };
+
+  const response = await fetch(config.endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Suggestion request failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = data?.content?.map((part) => part.text || "").join("") || "";
+  return parseSuggestionsFromText(text);
+}
+
 async function renderSuggestions({ prompt, responseText, result }) {
   try {
     if (!responseText) {
@@ -436,7 +622,7 @@ async function renderSuggestions({ prompt, responseText, result }) {
     }
 
     let suggestions = [];
-    if (result.context?.type === "openaiProxy") {
+    if (result.context?.type === "openaiCompatible") {
       suggestions = await generateOpenAiSuggestions({
         prompt,
         responseText,
@@ -444,6 +630,12 @@ async function renderSuggestions({ prompt, responseText, result }) {
       });
     } else if (result.context?.type === "gemini") {
       suggestions = await generateGeminiSuggestions({
+        prompt,
+        responseText,
+        context: result.context,
+      });
+    } else if (result.context?.type === "anthropic") {
+      suggestions = await generateAnthropicSuggestions({
         prompt,
         responseText,
         context: result.context,
@@ -474,6 +666,7 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived, options = {}) {
   const suggestionWrapper = document.querySelector(".popup-suggestion-wrapper");
   if (suggestionWrapper) {
     suggestionWrapper.innerHTML = "";
+    suggestionWrapper.classList.remove("has-suggestions");
   }
 
   ttsReady = false;
@@ -497,13 +690,15 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived, options = {}) {
 
   try {
     let result;
-    if (config.provider === "openaiProxy") {
-      result = await callOpenAiProxy({
+    if (config.provider === "openai" || config.provider === "deepseek") {
+      const apiKey = getApiKeyForProvider(config.provider);
+      result = await callOpenAiCompatible({
         prompt: preparedPrompt,
         systemPrompt,
         tuning,
         onChunkReceived,
         config,
+        apiKey,
       });
     } else if (config.provider === "gemini") {
       result = await callGemini({
@@ -514,6 +709,14 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived, options = {}) {
         config,
         imageParts: options.imageParts,
       });
+    } else if (config.provider === "anthropic") {
+      result = await callAnthropic({
+        prompt: preparedPrompt,
+        systemPrompt,
+        tuning,
+        onChunkReceived,
+        config,
+      });
     } else {
       throw new Error(`Unsupported provider: ${config.provider}`);
     }
@@ -523,8 +726,13 @@ async function fetchFreeGPTResponse(prompt, onChunkReceived, options = {}) {
     return result.text;
   } catch (error) {
     console.error("AI request failed", error);
-    if (/Gemini API key/.test(error.message)) {
+    const message = error?.message || "";
+    if (/Gemini API key/.test(message)) {
       onChunkReceived("Please add your Gemini API key from the options page before using this model.");
+    } else if (/Anthropic API key/.test(message)) {
+      onChunkReceived("Please add your Anthropic API key to chat with Claude.");
+    } else if (/Add your API key/.test(message)) {
+      onChunkReceived("Please add the required API key for this model in the extension options.");
     } else {
       onChunkReceived("Sorry, something went wrong");
     }
@@ -596,30 +804,43 @@ function createPopup() {
     }
   };
 
-  const closeButton = document.createElement("button");
-  closeButton.innerHTML = "&times;";
-  closeButton.classList.add("popup-close-button");
-  closeButton.onclick = () => hidePopup(popup, input, gptResult);
+  const popupWrapper = document.createElement("div");
+  popupWrapper.classList.add("popup-wrapper");
 
-  const gearButton = document.createElement("button");
-  gearButton.innerHTML = "&#9881;"; // Add gear icon as HTML entity
-  gearButton.classList.add("popup-gear-button"); // Add a CSS class to style the button
-  gearButton.onclick = () => {
-    chrome.runtime.sendMessage({ action: "OpenOptionsPage" });
-  };
+  const header = document.createElement("div");
+  header.classList.add("popup-header");
 
-  // Append the gear button to the popup
+  const titleStack = document.createElement("div");
+  titleStack.classList.add("popup-title");
+  const title = document.createElement("p");
+  title.textContent = "Hello, May I help?";
+  titleStack.appendChild(title);
+
+  const toolbar = document.createElement("div");
+  toolbar.classList.add("popup-toolbar");
+
+  const internetButton = document.createElement("button");
+  internetButton.type = "button";
+  internetButton.innerText = "WWW";
+  internetButton.classList.add("popup-icon-button");
+  internetButton.title = "Toggle web search";
+  internetButton.id = "internet-button";
+  if (localStorage.getItem("gptinternet") === "true") {
+    internetButton.classList.add("enabled");
+  }
+  internetButton.addEventListener("click", () => {
+    ToggleInternetButton();
+  });
 
   const ttsButton = document.createElement("button");
-  ttsButton.innerHTML = "TTS"; // Or any other label/icon you prefer
-  ttsButton.classList.add("popup-tts-button"); // Add a CSS class to style the button
-  popup.appendChild(ttsButton); // Add it next to the gear button
+  ttsButton.type = "button";
+  ttsButton.innerText = "TTS";
+  ttsButton.classList.add("popup-icon-button");
+  ttsButton.title = "Speak the answer";
   ttsButton.onclick = () => {
     if (ttsReady) {
       const gptResult = document.querySelector("#popup-gpt-result");
       const utterance = new SpeechSynthesisUtterance(gptResult.textContent);
-
-      // This function will be called when the list of voices has been populated
       function setVoice() {
         const voice = window.speechSynthesis
           .getVoices()
@@ -627,29 +848,37 @@ function createPopup() {
         if (voice) utterance.voice = voice;
         window.speechSynthesis.speak(utterance);
       }
-
-      // If the voices are already loaded, use the desired voice immediately
       if (window.speechSynthesis.getVoices().length) {
         setVoice();
       } else {
-        // If the voices are not yet loaded, wait for the voiceschanged event before setting the voice
         window.speechSynthesis.onvoiceschanged = setVoice;
       }
     }
   };
 
-  const internetButton = document.createElement("button");
-  internetButton.innerHTML =  "WWW" // Add gear icon as HTML entity
-  internetButton.classList.add("popup-internet-button");
-  internetButton.id = "internet-button";
-
-  internetButton.onclick = () => {
-    ToggleInternetButton();
+  const gearButton = document.createElement("button");
+  gearButton.type = "button";
+  gearButton.innerHTML = "&#9881;";
+  gearButton.classList.add("popup-icon-button");
+  gearButton.title = "Open settings";
+  gearButton.onclick = () => {
+    chrome.runtime.sendMessage({ action: "OpenOptionsPage" });
   };
 
-  popup.appendChild(internetButton);
-  popup.appendChild(gearButton);
-  
+  const closeButton = document.createElement("button");
+  closeButton.type = "button";
+  closeButton.innerHTML = "&times;";
+  closeButton.classList.add("popup-icon-button", "popup-close-button");
+  closeButton.title = "Close";
+  closeButton.onclick = () => hidePopup(popup, input, gptResult);
+
+  toolbar.appendChild(internetButton);
+  toolbar.appendChild(ttsButton);
+  toolbar.appendChild(gearButton);
+  toolbar.appendChild(closeButton);
+
+  header.appendChild(titleStack);
+  header.appendChild(toolbar);
 
   const inputWrapper = document.createElement("div");
   inputWrapper.style.display = "flex";
@@ -669,16 +898,9 @@ function createPopup() {
   inputWrapper.appendChild(input);
 
   const suggestionWrapper = document.createElement("div");
-  suggestionWrapper.style.display = "flex";
-  suggestionWrapper.style.flexDirection = "column";
   suggestionWrapper.classList.add("popup-suggestion-wrapper");
 
-  // Add a wrapper for the popup
-  const popupWrapper = document.createElement("div");
-  popupWrapper.classList.add("popup-wrapper");
-
-  // Move existing elements into the wrapper
-  popupWrapper.appendChild(closeButton);
+  popupWrapper.appendChild(header);
   popupWrapper.appendChild(inputWrapper);
 
   const textareaWrapper = document.createElement("div");
@@ -1053,18 +1275,14 @@ function createPopup() {
   });
 
   function ToggleInternetButton() {
-    
-      let internetMode = localStorage.getItem("gptinternet");
-
-      if (internetMode === "false" || internetMode === null) {
-        localStorage.setItem("gptinternet", "true")
-        internetButton.classList.add("enabled"); 
-      }
-
-      if (internetMode === "true") {
-        localStorage.setItem("gptinternet", "false")
-        internetButton.classList.remove("enabled");
-      }
+    const internetMode = localStorage.getItem("gptinternet");
+    if (internetMode === "true") {
+      localStorage.setItem("gptinternet", "false");
+      internetButton.classList.remove("enabled");
+    } else {
+      localStorage.setItem("gptinternet", "true");
+      internetButton.classList.add("enabled");
+    }
   }
 
  
