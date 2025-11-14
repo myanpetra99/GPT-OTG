@@ -1,236 +1,175 @@
+:root {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light dark;
+}
+
+#input-focus-popup {
+  position: absolute;
+  z-index: 9999;
+  min-width: 320px;
+  max-width: min(480px, 90vw);
+  color: #0f172a;
+  pointer-events: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  #input-focus-popup {
+    color: #e2e8f0;
+  }
+}
+
 .popup-content {
-  background-color: transparent;
-  padding: 10px;
-  box-sizing: border-box;
-  color: rgb(0, 0, 0);
-  border-radius: 0%;
-  transition: all 0.5s ease-in-out;
-  min-width: fit-content;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  padding: 18px 20px 16px;
+  box-shadow: 0 20px 40px -24px rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(12px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.popup-content:hover{
-    opacity: 1;
+.popup-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 30px 55px -26px rgba(15, 23, 42, 0.45);
 }
 
-.input-focus-popup:hover{
-  opacity: 1;
-}
-
-
-#popup-gpt-result {
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  background-color: white;
-  border: none;
-  color: black;
-  max-width: 500px;
-}
-
-.popup-close-button {
-  position: absolute;
-  top: 5px;
-  right: 10px;
-  font-size: 20px;
-  font-weight: bold;
-  color: #666;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  outline: none;
-}
-
-.popup-internet-button {
-  position: absolute;
-  top: 10px;
-  right: 65px;
-  font-size: 10px;
-  font-weight: bold;
-  color: #666;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  outline: none;
-}
-
-.enabled {
-  color: #020fc5;
-}
-
-.enabled:hover {
-  color: #010a8e;
-}
-
-.popup-tts-button {
-  position: absolute;
-  top: 10px;
-  right: 40px;
-  font-size: 10px;
-  font-weight: bold;
-  color: #666;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  outline: none;
-}
-
-.popup-gear-button {
-  position: absolute;
-  top: 4px;
-  right: 25px;
-  font-size: 20px;
-  font-weight: bold;
-  color: #666;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  outline: none;
-}
-
-.popup-close-button:hover {
-  color: #333;
-}
-
-.popup-gear-button:hover {
-  color: #333;
-}
-
-.popup-tts-button:hover {
-  color: #333;
-}
-
-.popup-internet-button:hover {
-  color: #020fc5
-}
-
-.popup-wrapper {
-  min-width: 300px;
-}
-
-.popup-input {
-  background-color: white;
-  border: none;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  width: 100% !important;
-  min-width: 100% !important;
-  color: black;
-}
-
-input:focus,
-input.form-control:focus {
-  outline: none !important;
-  outline-width: 0 !important;
-  box-shadow: none;
-  -moz-box-shadow: none;
-  -webkit-box-shadow: none;
+@media (prefers-color-scheme: dark) {
+  .popup-content {
+    background: rgba(17, 24, 39, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -20px rgba(0, 0, 0, 0.55);
+  }
 }
 
 .popup-wrapper {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-.popup-input {
-  resize: both;
-  min-height: 30px;
-  max-height: 100px;
-  resize: both;
-  margin-bottom: 10px;
-  color: black;
+  gap: 12px;
 }
 
-#popup-gpt-result {
-  border-top: 3px dotted #bbb;
-  resize: none;
-  min-height: 100px;
-  max-height: 1000px;
-  overflow-y: auto;
-  color: black;
-  line-height: 1.5;
+.popup-close-button,
+.popup-gear-button,
+.popup-tts-button,
+.popup-internet-button {
+  position: absolute;
+  top: 10px;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.popup-close-button { right: 12px; font-size: 20px; }
+.popup-gear-button { right: 44px; font-size: 18px; }
+.popup-tts-button { right: 82px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.popup-internet-button { right: 124px; font-size: 11px; letter-spacing: 0.05em; }
+
+.popup-close-button:hover,
+.popup-gear-button:hover,
+.popup-tts-button:hover,
+.popup-internet-button:hover {
+  color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.enabled {
+  color: #2563eb;
 }
 
 .popup-input-wrapper {
-  background-color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-
-.half-scroll::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 5px;
+.popup-input {
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
+  padding: 10px 14px;
+  font: inherit;
+  background: rgba(255, 255, 255, 0.75);
+  color: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.half-scroll::-webkit-scrollbar {
-  width: 8px;
+.popup-input:focus {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.5);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
-.half-scroll::-webkit-scrollbar-track {
-  background-color: #f1f1f1;
+@media (prefers-color-scheme: dark) {
+  .popup-input {
+    background: rgba(17, 24, 39, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+  }
 }
 
-.half-scroll:focus {
-  /* set the scroll position to show the half part of the remaining text when the textarea is focused */
-  scroll-behavior: smooth;
-  scroll-margin-block: 50%; /* set the margin block to 50% to show the half part of the remaining text */
+#popup-gpt-result {
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  padding: 14px 16px;
+  min-height: 120px;
+  max-height: 420px;
+  overflow-y: auto;
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
-.textarea-container {
-  position: relative;
+@media (prefers-color-scheme: dark) {
+  #popup-gpt-result {
+    background: rgba(148, 163, 184, 0.08);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+  }
+}
+
+#popup-gpt-result:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.4);
 }
 
 .suggestion-button {
-  background-color: transparent;
-  border: none;
-  color: #666;
-  font-size: 12px;
-  font-weight: bold;
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 600;
   cursor: pointer;
-  outline: none;
-  padding: 0;
-  margin-top: 5px;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .suggestion-button:hover {
-  color: #333;
+  transform: translateY(-1px);
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.4);
 }
 
-.popup-suggestion-wrapper {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 10px;
-  margin-top: 5px;
-  border-top: 3px dotted #bbb;
+@media (prefers-color-scheme: dark) {
+  .suggestion-button {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(96, 165, 250, 0.2);
+    color: #93c5fd;
+  }
+
+  .suggestion-button:hover {
+    background: rgba(59, 130, 246, 0.18);
+    border-color: rgba(96, 165, 250, 0.4);
+  }
 }
 
-
-
-
-.yt-button {
-  color:var(--yt-spec-text-primary);
-  background-color: var(--yt-spec-badge-chip-background);
-  padding: 10px 16px;
-  border: none;
-  border-radius: 30px;
-  text-transform: capitalize;
-  font-weight: 500;
-  margin-right: 5px;
-  outline: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+textarea,
+input,
+button {
+  font-family: inherit;
 }
-
-.hidden {
-  display: none;
-}
-
-.yt-button:hover {
-  background-color: var(--yt-spec-mono-tonal-hover);
-}
-
